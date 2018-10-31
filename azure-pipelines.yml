@@ -9,20 +9,18 @@ pool:
 
 variables:
   imageName: '$(dockerId)/$(projectName)'
-  branchTag: '$(build.sourceBranchName)'
-  branchBuildNumberTag: '$(build.sourceBranchName)-$(Date:yyyyMMdd)$(Rev:.r)'
 
 steps:
-- script: docker build -f Dockerfile -t $(imageName):$(branchTag) .
+- script: docker build -f Dockerfile -t $(imageName):$(build.sourceBranchName) .
   displayName: 'docker build'
   
 - script: docker login -u $(dockerId) -p $(dockerPassword)
   displayName: 'docker login'
 
-- script: docker push $(imageName):$(branchTag)
+- script: docker push $(imageName):$(build.sourceBranchName)
   displayName: 'docker push'
 
 - script: |
-        docker tag $(imageName):$(branchTag) $(imageName):$(branchBuildNumberTag)
-        docker push $(imageName):$(branchBuildNumberTag)
+        docker tag $(imageName):$(build.sourceBranchName) $(imageName):$(build.buildNumber)
+        docker push $(imageName):$(build.buildNumber)
   displayName: 'retag and docker push with build number'
