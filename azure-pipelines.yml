@@ -3,23 +3,26 @@
 # Add steps that use Docker Compose, tag images, push to a registry, run an image, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
+name: $(build.sourceBranchName)-$(Date:yyyyMMdd)$(Rev:.r)
 pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  imageName: '$(dockerId)/$(projectName):$(build.sourceBranchName)'
+  imageName: '$(dockerId)/$(projectName)'
+  branchTag: '$(build.sourceBranchName)'
+  branchBuildNumberTag: '$(build.sourceBranchName)-$(Date:yyyyMMdd)$(Rev:.r)'
 
 steps:
-- script: docker build -f Dockerfile -t $(imageName) .
+- script: docker build -f Dockerfile -t $(imageName):$(branchTag) .
   displayName: 'docker build'
   
 - script: docker login -u $(dockerId) -p $(dockerPassword)
   displayName: 'docker login'
 
-- script: docker push $(imageName)
-  displayName: 'docker push latest'
+- script: docker push $(imageName):$(branchTag)
+  displayName: 'docker push'
 
 - script: |
-        docker tag $(imageName) $(imageName):$(build.sourceBranchName)-$(build.buildId)
-        docker push $(imageName):$(build.sourceBranchName)-$(build.buildId)
-  displayName: 'retag and docker push with buildId'
+        docker tag $(imageName):$(branchTag) $(imageName):$(branchBuildNumberTag)
+        docker push $(imageName):$(branchBuildNumberTag)
+  displayName: 'retag and docker push with build number'
