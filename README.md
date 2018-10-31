@@ -1,7 +1,11 @@
 
 # CaptureOrder
 
+[![Build Status](https://dev.azure.com/theazurechallenge/Kubernetes/_apis/build/status/Azure%20organization/Azure.azch-captureorder)](https://dev.azure.com/theazurechallenge/Kubernetes/_build/latest?definitionId=10)
+
 A containerised Go swagger API to capture orders, write them to MongoDb and an AMQP message queue.
+
+
 
 ## Usage
 ### Swagger
