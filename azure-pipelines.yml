@@ -8,7 +8,7 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  imageName: '$(dockerId)/$(projectName)'
+  imageName: '$(dockerId)/captureorder'
 
 steps:
 - script: docker build -f Dockerfile -t $(imageName) .
