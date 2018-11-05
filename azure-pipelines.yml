@@ -11,16 +11,17 @@ variables:
   imageName: '$(dockerId)/$(projectName)'
 
 steps:
-- script: docker build -f Dockerfile -t $(imageName):$(build.sourceBranchName) .
+- script: docker build -f Dockerfile -t $(imageName) .
   displayName: 'docker build'
   
 - script: docker login -u $(dockerId) -p $(dockerPassword)
   displayName: 'docker login'
 
-- script: docker push $(imageName):$(build.sourceBranchName)
-  displayName: 'docker push'
+- script: docker push $(imageName)
+  displayName: 'docker push latest if this is the master branch'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 - script: |
-        docker tag $(imageName):$(build.sourceBranchName) $(imageName):$(build.buildNumber)
+        docker tag $(imageName) $(imageName):$(build.buildNumber)
         docker push $(imageName):$(build.buildNumber)
-  displayName: 'retag and docker push with build number'
+  displayName: 'docker push with build number'
