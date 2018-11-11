@@ -33,6 +33,7 @@ The following environment variables need to be passed to the container:
 ```
 ENV TEAMNAME=[YourTeamName]
 ENV APPINSIGHTS_KEY=[YourCustomApplicationInsightsKey] # Optional, create your own App Insights resource
+ENV CHALLENGEAPPINSIGHTS_KEY=[Challenge Application Insights Key] # Override, if given one by the proctors
 ```
 
 ### For MongoDB
@@ -47,19 +48,13 @@ ENV MONGOURL=mongodb://[mongoinstance].[namespace]
 ENV MONGOURL=mongodb://[CosmosDBInstanceName]:[CosmosDBPrimaryPassword]=@[CosmosDBInstanceName].documents.azure.com:10255/?ssl=true&replicaSet=globaldb
 ```
 
-### For RabbitMQ
+### For Service Bus
 
 ```
-ENV AMQPURL=amqp://[url]:5672
+ENV AMQPURL=amqps://[policy name]:[policy key]@[yourServiceBus].servicebus.windows.net/[queuename]
 ```
 
-### For Event Hubs
-
-```
-ENV AMQPURL=amqps://[policy name]:[policy key]@[youreventhub].servicebus.windows.net/[eventhubname]
-```
-
-Make sure your _policy key_ is URL Encoded. Use a tool like: <https://www.url-encode-decode.com/>
+> Make sure your _policy key_ is URL Encoded. Use a tool like: <https://www.url-encode-decode.com/>
 
 ## Contributing
 

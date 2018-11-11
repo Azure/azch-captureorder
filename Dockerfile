@@ -29,13 +29,15 @@ COPY --from=builder /go/src/captureorderfd .
 # Define environment variables
 # Application Insights
 ENV APPINSIGHTS_KEY=
+
+# PLEASE DO NOT OVERRIDE UNLESS INSTRUCTED BY PROCTORS
 ENV CHALLENGEAPPINSIGHTS_KEY=23c6b1ec-ca92-4083-86b6-eba851af9032
 
 # Challenge Logging
 ENV TEAMNAME=
 
-# AMQP
-ENV AMQPURL=
+# AMQP for Service Bus
+ENV AMQPURL="amqps://[policy name]:[policy key]@[yourServiceBus].servicebus.windows.net/[queuename]"
 
 # Mongo/Cosmos
 ENV MONGOURL=
