@@ -395,7 +395,6 @@ func initAMQP() {
 
 
 	log.Println("Using Service Bus")
-	queueType = "ServiceBus"
 
 	// Parse the eventHubName (last part of the url)
 	serivceBusName = url.Path
