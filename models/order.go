@@ -414,13 +414,13 @@ func initAMQP10() {
 		}
 
 		// Open a session if we managed to get an amqpClient
-		log.Println("\tConnected to EventHub")	
+		log.Println("\tConnected to Service Bus")	
 		if amqp10Client != nil {
 			log.Println("\tCreating a new AMQP session")
 			amqp10Session, err = amqp10Client.NewSession()	
 			if err != nil {
 				trackException(err)
-				log.Fatal("\t\tCreating AMQP session: ", err)
+				log.Fatal("\t\tError creating AMQP session: ", err)
 			}
 		}
 
@@ -434,7 +434,7 @@ func initAMQP10() {
 			if customTelemetryClient != nil {
 				customTelemetryClient.TrackException(err)
 			}
-			log.Fatal("\t\tCreating sender link: ", err)
+			log.Fatal("\t\tError creating sender link: ", err)
 		}
 
 		if err != nil {
