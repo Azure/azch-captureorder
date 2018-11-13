@@ -8,7 +8,6 @@ import (
 
 	"log"
 	"math/rand"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
