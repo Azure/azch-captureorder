@@ -36,7 +36,10 @@ type Order struct {
 // Environment variables
 var customInsightsKey = os.Getenv("APPINSIGHTS_KEY")
 var challengeInsightsKey = os.Getenv("CHALLENGEAPPINSIGHTS_KEY")
-var mongoURL = os.Getenv("MONGOURL")
+var mongoHost = os.Getenv("MONGOHOST")
+var mongoUsername = os.Getenv("MONGOUSERNAME")
+var mongoPassword = os.Getenv("MONGOPASSWORD")
+var mongoSSL = false
 var amqpURL = os.Getenv("AMQPURL")
 var teamName = os.Getenv("TEAMNAME")
 var mongoPoolLimit = 25
@@ -61,7 +64,7 @@ var challengeTelemetryClient appinsights.TelemetryClient
 var customTelemetryClient appinsights.TelemetryClient
 
 // For tracking and code branching purposes
-var isCosmosDb = strings.Contains(mongoURL, "documents.azure.com")
+var isCosmosDb = strings.Contains(mongoHost, "documents.azure.com")
 var db string // CosmosDB or MongoDB?
 
 // TrackInitialOrder send telemetry data for initial order, to track challenge
@@ -102,7 +105,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 		order.Source = os.Getenv("SOURCE")
 	}
 
-	log.Print("Inserting into MongoDB URL: ", mongoURL, " CosmosDB: ", isCosmosDb)
+	log.Print("Inserting into MongoDB URL: ", mongoHost, " CosmosDB: ", isCosmosDb)
 
 	// insert Document in collection
 	mongoDBCollection := mongoDBSessionCopy.DB(mongoDatabaseName).C(mongoCollectionName)
@@ -139,7 +142,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"CosmosDB",
 				"MongoDB",
-				mongoURL,
+				mongoHost,
 				success)
 			dependency.Data = "Insert order"		
 
@@ -153,7 +156,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"MongoDB",
 				"MongoDB",
-				mongoURL,
+				mongoHost,
 				success)
 			dependency.Data = "Insert order"	
 
@@ -182,7 +185,9 @@ func init() {
 	// Validate environment variables
 	validateVariable(customInsightsKey, "APPINSIGHTS_KEY")
 	validateVariable(challengeInsightsKey, "CHALLENGEAPPINSIGHTS_KEY")
-	validateVariable(mongoURL, "MONGOURL")
+	validateVariable(mongoHost, "MONGOHOST")
+	validateVariable(mongoUsername, "MONGOUSERNAME")
+	validateVariable(mongoPassword, "MONGOPASSWORD")
 	validateVariable(amqpURL, "AMQPURL")
 	validateVariable(teamName, "TEAMNAME")
 
@@ -224,33 +229,21 @@ func validateVariable(value string, envName string) {
 }
 
 func initMongoDial() (success bool, mErr error) {
-	url, err := url.Parse(mongoURL)
-	if err != nil {
-		// If the team provided an Application Insights key, let's track that exception
-		trackException(err)
-		log.Fatal(fmt.Sprintf("Problem parsing Mongo URL %s: ",url), err)
-	}
-
 	if isCosmosDb {
 		log.Println("Using CosmosDB")
 		db = "CosmosDB"
+		mongoSSL = true
 
 	} else {
 		log.Println("Using MongoDB")
 		db = "MongoDB"
+		mongoSSL = false
 	}
 
 	// Parse the connection string to extract components because the MongoDB driver is peculiar
 	var dialInfo *mgo.DialInfo
-	mongoUsername := ""
-	mongoPassword := ""
-	if url.User != nil {
-		mongoUsername = url.User.Username()
-		mongoPassword, _ = url.User.Password()
-	}
-	mongoHost := url.Host
+	
 	mongoDatabase := mongoDatabaseName // can be anything
-	mongoSSL := strings.Contains(url.RawQuery, "ssl=true")
 
 	log.Printf("\tUsername: %s", mongoUsername)
 	log.Printf("\tPassword: %s", mongoPassword)
@@ -287,7 +280,7 @@ func initMongoDial() (success bool, mErr error) {
 	log.Println("Attempting to connect to MongoDB")
 	mongoDBSession, mongoDBSessionError = mgo.DialWithInfo(dialInfo)
 	if mongoDBSessionError != nil {
-		log.Println(fmt.Sprintf("Can't connect to mongo at [%s], go error: ", mongoURL), mongoDBSessionError)
+		log.Println(fmt.Sprintf("Can't connect to mongo at [%s], go error: ", mongoHost), mongoDBSessionError)
 		trackException(mongoDBSessionError)
 		mErr = mongoDBSessionError
 	} else {
@@ -308,7 +301,7 @@ func initMongoDial() (success bool, mErr error) {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"CosmosDB",
 				"MongoDB",
-				mongoURL,
+				mongoHost,
 				success)
 				dependency.Data = "Create session"
 
@@ -323,7 +316,7 @@ func initMongoDial() (success bool, mErr error) {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"MongoDB",
 				"MongoDB",
-				mongoURL,
+				mongoHost,
 				success)
 				dependency.Data = "Create session"
 

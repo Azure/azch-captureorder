@@ -31,7 +31,7 @@ COPY --from=builder /go/src/captureorderfd .
 ENV APPINSIGHTS_KEY=
 
 # PLEASE DO NOT OVERRIDE UNLESS INSTRUCTED BY PROCTORS
-ENV CHALLENGEAPPINSIGHTS_KEY=23c6b1ec-ca92-4083-86b6-eba851af9032
+ENV CHALLENGEAPPINSIGHTS_KEY=0e90ab6f-79ee-466b-a1e7-fe469a0767da
 
 # Challenge Logging
 ENV TEAMNAME=
@@ -40,7 +40,9 @@ ENV TEAMNAME=
 ENV AMQPURL="amqps://[policy name]:[policy key]@[yourServiceBus].servicebus.windows.net/[queuename]"
 
 # Mongo/Cosmos
-ENV MONGOURL=
+ENV MONGOHOST=
+ENV MONGOUSER=
+ENV MONGOPASSWORD=
 
 # Expose the application on port 8080
 EXPOSE 8080
