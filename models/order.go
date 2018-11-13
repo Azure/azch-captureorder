@@ -175,7 +175,11 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 
 // AddOrderToAMQP Adds the order to AMQP (Service Bus Queue)
 func AddOrderToAMQP(order Order) {
-	addOrderToAMQP10(order)
+	if amqpURL != "" {
+		addOrderToAMQP10(order)
+	} else {
+		log.Println("Skipping inserting to Service Bus because it isn't configured yet.")
+	}
 }
 
 //// BEGIN: NON EXPORTED FUNCTIONS
@@ -216,8 +220,10 @@ func init() {
 	// Initialize the MongoDB client
 	initMongo()
 
-	// Initialize the AMQP client
-	initAMQP()
+	// Initialize the AMQP client if AMQPURL is passed
+	if amqpURL != "" {
+		initAMQP()
+	}
 }
 
 // Logs out value of a variable
