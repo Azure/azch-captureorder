@@ -39,7 +39,8 @@ var challengeInsightsKey = os.Getenv("CHALLENGEAPPINSIGHTS_KEY")
 var mongoHost = os.Getenv("MONGOHOST")
 var mongoUsername = os.Getenv("MONGOUSERNAME")
 var mongoPassword = os.Getenv("MONGOPASSWORD")
-var mongoSSL = false
+var mongoSSL = false 
+var mongoPort = ""
 var amqpURL = os.Getenv("AMQPURL")
 var teamName = os.Getenv("TEAMNAME")
 var mongoPoolLimit = 25
@@ -233,11 +234,13 @@ func initMongoDial() (success bool, mErr error) {
 		log.Println("Using CosmosDB")
 		db = "CosmosDB"
 		mongoSSL = true
+		mongoPort = ":10255"
 
 	} else {
 		log.Println("Using MongoDB")
 		db = "MongoDB"
 		mongoSSL = false
+		mongoPort = ""
 	}
 
 	// Parse the connection string to extract components because the MongoDB driver is peculiar
@@ -248,12 +251,13 @@ func initMongoDial() (success bool, mErr error) {
 	log.Printf("\tUsername: %s", mongoUsername)
 	log.Printf("\tPassword: %s", mongoPassword)
 	log.Printf("\tHost: %s", mongoHost)
+	log.Printf("\tPort: %s", mongoPort)
 	log.Printf("\tDatabase: %s", mongoDatabase)
 	log.Printf("\tSSL: %t", mongoSSL)
 
 	if mongoSSL {
 		dialInfo = &mgo.DialInfo{
-			Addrs:    []string{mongoHost},
+			Addrs:    []string{mongoHost+mongoPort},
 			Timeout:  10 * time.Second,
 			Database: mongoDatabase, // It can be anything
 			Username: mongoUsername, // Username
@@ -264,7 +268,7 @@ func initMongoDial() (success bool, mErr error) {
 		}
 	} else {
 		dialInfo = &mgo.DialInfo{
-			Addrs:    []string{mongoHost},
+			Addrs:    []string{mongoHost+mongoPort},
 			Timeout:  10 * time.Second,
 			Database: mongoDatabase, // It can be anything
 			Username: mongoUsername, // Username
@@ -280,7 +284,7 @@ func initMongoDial() (success bool, mErr error) {
 	log.Println("Attempting to connect to MongoDB")
 	mongoDBSession, mongoDBSessionError = mgo.DialWithInfo(dialInfo)
 	if mongoDBSessionError != nil {
-		log.Println(fmt.Sprintf("Can't connect to mongo at [%s], go error: ", mongoHost), mongoDBSessionError)
+		log.Println(fmt.Sprintf("Can't connect to mongo at [%s], go error: ", mongoHost+mongoPort), mongoDBSessionError)
 		trackException(mongoDBSessionError)
 		mErr = mongoDBSessionError
 	} else {
