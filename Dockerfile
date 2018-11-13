@@ -37,7 +37,7 @@ ENV CHALLENGEAPPINSIGHTS_KEY=0e90ab6f-79ee-466b-a1e7-fe469a0767da
 ENV TEAMNAME=
 
 # AMQP for Service Bus
-ENV AMQPURL="amqps://[policy name]:[policy key]@[yourServiceBus].servicebus.windows.net/[queuename]"
+ENV AMQPURL=
 
 # Mongo/Cosmos
 ENV MONGOHOST=
