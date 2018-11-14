@@ -27,14 +27,14 @@ type OrderController struct {
 func init() {
 	// Init App Insights
 	challengeTelemetryClient = appinsights.NewTelemetryClient(challengeInsightsKey)
-	challengeTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder")
+	challengeTelemetryClient.Context().Tags.Cloud().SetRole("captureorder")
 
 	if customInsightsKey != "" {
 		customTelemetryClient = appinsights.NewTelemetryClient(customInsightsKey)
 
 		// Set role instance name globally -- this is usually the
 		// name of the service submitting the telemetry
-		customTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder")
+		customTelemetryClient.Context().Tags.Cloud().SetRole("captureorder")
 	}
 
 	appinsights.NewDiagnosticsMessageListener(func(msg string) error {
