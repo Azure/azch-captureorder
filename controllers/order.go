@@ -27,14 +27,14 @@ type OrderController struct {
 func init() {
 	// Init App Insights
 	challengeTelemetryClient = appinsights.NewTelemetryClient(challengeInsightsKey)
-	challengeTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder_golang")
+	challengeTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder")
 
 	if customInsightsKey != "" {
 		customTelemetryClient = appinsights.NewTelemetryClient(customInsightsKey)
 
 		// Set role instance name globally -- this is usually the
 		// name of the service submitting the telemetry
-		customTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder_golang")
+		customTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder")
 	}
 
 	appinsights.NewDiagnosticsMessageListener(func(msg string) error {
@@ -91,10 +91,11 @@ func trackRequest(requestStartTime time.Time, requestEndTime time.Time, requestS
 	if requestSuccess != true {
 		responseCode = "500"
 	} 
-	requestTelemetry := appinsights.NewRequestTelemetry("POST", "fulfillorders/orders/v1", 0, responseCode)
+	requestTelemetry := appinsights.NewRequestTelemetry("POST", "captureorder.svc/orders/v1", 0, responseCode)
 	requestTelemetry.MarkTime(requestStartTime, requestEndTime)
 	requestTelemetry.Properties["team"] = teamName
 	requestTelemetry.Properties["service"] = "CaptureOrder"
+	requestTelemetry.Name = "CaptureOrder"
 
 	challengeTelemetryClient.Track(requestTelemetry)
 	if customTelemetryClient != nil {
