@@ -35,6 +35,11 @@ func init() {
 		// name of the service submitting the telemetry
 		customTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder_golang")
 	}
+
+	appinsights.NewDiagnosticsMessageListener(func(msg string) error {
+		fmt.Printf("[%s] %s\n", time.Now().Format(time.UnixDate), msg)
+		return nil
+	})
 }
 
 // @Title Capture Order
