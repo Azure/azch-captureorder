@@ -3,13 +3,38 @@ package controllers
 import (
 	"captureorderfd/models"
 	"encoding/json"
-
+	"os"
+	"time"
 	"github.com/astaxie/beego"
+	"github.com/Microsoft/ApplicationInsights-Go/appinsights"
 )
+
+
+var customInsightsKey = os.Getenv("APPINSIGHTS_KEY")
+var challengeInsightsKey = os.Getenv("CHALLENGEAPPINSIGHTS_KEY")
+var teamName = os.Getenv("TEAMNAME")
+
+// Application Insights telemetry clients
+var challengeTelemetryClient appinsights.TelemetryClient
+var customTelemetryClient appinsights.TelemetryClient
 
 // Operations about object
 type OrderController struct {
 	beego.Controller
+}
+
+func init() {
+	// Init App Insights
+	challengeTelemetryClient = appinsights.NewTelemetryClient(challengeInsightsKey)
+	challengeTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder_golang")
+
+	if customInsightsKey != "" {
+		customTelemetryClient = appinsights.NewTelemetryClient(customInsightsKey)
+
+		// Set role instance name globally -- this is usually the
+		// name of the service submitting the telemetry
+		customTelemetryClient.Context().Tags.Cloud().SetRole("fulfillorder_golang")
+	}
 }
 
 // @Title Capture Order
@@ -23,14 +48,25 @@ func (this *OrderController) Post() {
 	var ob models.Order
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
 
+	// Inject telemetry clients
+	models.CustomTelemetryClient = customTelemetryClient;
+	models.ChallengeTelemetryClient = challengeTelemetryClient;
+
 	models.TrackInitialOrder(ob)
 	
+	// Track the request
+	requestStartTime := time.Now()
+
 	// Add the order to MongoDB
 	addedOrder, err := models.AddOrderToMongoDB(ob)
+	var orderAddedToMongoDb = false
+	var orderAddedToAMQP = false
 
 	if err == nil {
+		orderAddedToMongoDb = true
+
 		// Add the order to AMQP
-		models.AddOrderToAMQP(addedOrder)
+		orderAddedToAMQP = models.AddOrderToAMQP(addedOrder)
 
 		// return
 		this.Data["json"] = map[string]string{"orderId": addedOrder.OrderID}
@@ -39,5 +75,23 @@ func (this *OrderController) Post() {
 		this.Ctx.Output.SetStatus(500)
 	}
 	
+	trackRequest(requestStartTime, time.Now(), orderAddedToMongoDb && orderAddedToAMQP)
+
 	this.ServeJSON()
+}
+
+func trackRequest(requestStartTime time.Time, requestEndTime time.Time, requestSuccess bool) {
+	var responseCode = "200"
+	if requestSuccess != true {
+		responseCode = "500"
+	} 
+	requestTelemetry := appinsights.NewRequestTelemetry("POST", "fulfillorders/orders/v1", 0, responseCode)
+	requestTelemetry.MarkTime(requestStartTime, requestEndTime)
+	requestTelemetry.Properties["team"] = teamName
+	requestTelemetry.Properties["service"] = "FulfillOrder"
+
+	challengeTelemetryClient.Track(requestTelemetry)
+	if customTelemetryClient != nil {
+		customTelemetryClient.Track(requestTelemetry)
+	}
 }

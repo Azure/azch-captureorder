@@ -34,8 +34,6 @@ type Order struct {
 }
 
 // Environment variables
-var customInsightsKey = os.Getenv("APPINSIGHTS_KEY")
-var challengeInsightsKey = os.Getenv("CHALLENGEAPPINSIGHTS_KEY")
 var mongoHost = os.Getenv("MONGOHOST")
 var mongoUsername = os.Getenv("MONGOUSER")
 var mongoPassword = os.Getenv("MONGOPASSWORD")
@@ -61,8 +59,8 @@ var amqpSender *amqp10.Sender
 var serivceBusName string
 
 // Application Insights telemetry clients
-var challengeTelemetryClient appinsights.TelemetryClient
-var customTelemetryClient appinsights.TelemetryClient
+var ChallengeTelemetryClient appinsights.TelemetryClient
+var CustomTelemetryClient appinsights.TelemetryClient
 
 // For tracking and code branching purposes
 var isCosmosDb = strings.Contains(mongoHost, "documents.azure.com")
@@ -76,9 +74,9 @@ func TrackInitialOrder(order Order) {
 	eventTelemetry.Properties["type"] = "http"
 	eventTelemetry.Properties["service"] = "CaptureOrder"
 	eventTelemetry.Properties["orderId"] = order.OrderID
-	challengeTelemetryClient.Track(eventTelemetry)
-	if customTelemetryClient != nil {
-		customTelemetryClient.Track(eventTelemetry)
+	ChallengeTelemetryClient.Track(eventTelemetry)
+	if CustomTelemetryClient != nil {
+		CustomTelemetryClient.Track(eventTelemetry)
 	}
 }
 
@@ -115,8 +113,8 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 
 	if mongoDBSessionError != nil {
 		// If the team provided an Application Insights key, let's track that exception
-		if customTelemetryClient != nil {
-			customTelemetryClient.TrackException(mongoDBSessionError)
+		if CustomTelemetryClient != nil {
+			CustomTelemetryClient.TrackException(mongoDBSessionError)
 		}
 		log.Println("Problem inserting data: ", mongoDBSessionError)
 		log.Println("_id:", order)
@@ -134,11 +132,11 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 		eventTelemetry.Properties["type"] = db
 		eventTelemetry.Properties["service"] = "CaptureOrder"
 		eventTelemetry.Properties["orderId"] = order.OrderID
-		challengeTelemetryClient.Track(eventTelemetry)
+		ChallengeTelemetryClient.Track(eventTelemetry)
 	}
 	
 	// Track the dependency, if the team provided an Application Insights key, let's track that dependency
-	if customTelemetryClient != nil {
+	if CustomTelemetryClient != nil {
 		if isCosmosDb {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"CosmosDB",
@@ -152,7 +150,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 			}
 				
 			dependency.MarkTime(startTime, endTime)
-			customTelemetryClient.Track(dependency)	
+			CustomTelemetryClient.Track(dependency)	
 		} else {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"MongoDB",
@@ -166,7 +164,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 			}
 
 			dependency.MarkTime(startTime, endTime)
-			customTelemetryClient.Track(dependency)		
+			CustomTelemetryClient.Track(dependency)		
 		}
 	}
 
@@ -174,11 +172,12 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 }
 
 // AddOrderToAMQP Adds the order to AMQP (Service Bus Queue)
-func AddOrderToAMQP(order Order) {
+func AddOrderToAMQP(order Order)  bool{
 	if amqpURL != "" {
-		addOrderToAMQP10(order)
+		return addOrderToAMQP10(order)
 	} else {
 		log.Println("Skipping inserting to Service Bus because it isn't configured yet.")
+		return true
 	}
 }
 
@@ -188,8 +187,6 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 
 	// Validate environment variables
-	validateVariable(customInsightsKey, "APPINSIGHTS_KEY")
-	validateVariable(challengeInsightsKey, "CHALLENGEAPPINSIGHTS_KEY")
 	validateVariable(mongoHost, "MONGOHOST")
 	validateVariable(mongoUsername, "MONGOUSERNAME")
 	validateVariable(mongoPassword, "MONGOPASSWORD")
@@ -203,19 +200,6 @@ func init() {
 		}
 	}
 	log.Printf("MongoDB pool limit set to %v. You can override by setting the MONGOPOOL_LIMIT environment variable." , mongoPoolLimit)
-	
-
-	// Initialize the Application Insights telemtry client(s)
-	challengeTelemetryClient = appinsights.NewTelemetryClient(challengeInsightsKey)
-	challengeTelemetryClient.Context().Tags.Cloud().SetRole("captureorder_golang")
-
-	if customInsightsKey != "" {
-		customTelemetryClient = appinsights.NewTelemetryClient(customInsightsKey)
-
-		// Set role instance name globally -- this is usually the
-		// name of the service submitting the telemetry
-		customTelemetryClient.Context().Tags.Cloud().SetRole("captureorder_golang")
-	}
 
 	// Initialize the MongoDB client
 	initMongo()
@@ -306,7 +290,7 @@ func initMongoDial() (success bool, mErr error) {
 	endTime := time.Now()
 
 	// Track the dependency, if the team provided an Application Insights key, let's track that dependency
-	if customTelemetryClient != nil {
+	if CustomTelemetryClient != nil {
 		if isCosmosDb {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"CosmosDB",
@@ -320,8 +304,8 @@ func initMongoDial() (success bool, mErr error) {
 			}
 
 			dependency.MarkTime(startTime, endTime)
-			customTelemetryClient.TrackException(mongoDBSessionError)
-			customTelemetryClient.Track(dependency)
+			CustomTelemetryClient.TrackException(mongoDBSessionError)
+			CustomTelemetryClient.Track(dependency)
 		} else {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"MongoDB",
@@ -335,8 +319,8 @@ func initMongoDial() (success bool, mErr error) {
 			}
 
 			dependency.MarkTime(startTime, endTime)
-			customTelemetryClient.TrackException(mongoDBSessionError)
-			customTelemetryClient.Track(dependency)
+			CustomTelemetryClient.TrackException(mongoDBSessionError)
+			CustomTelemetryClient.Track(dependency)
 		}
 	}
 	return
@@ -390,8 +374,8 @@ func initAMQP() {
 	url, err := url.Parse(amqpURL)
 	if err != nil {
 		// If the team provided an Application Insights key, let's track that exception
-		if customTelemetryClient != nil {
-			customTelemetryClient.TrackException(err)
+		if CustomTelemetryClient != nil {
+			CustomTelemetryClient.TrackException(err)
 		}
 		log.Fatal(fmt.Sprintf("Problem parsing AMQP Host %s. Make sure you URL Encoded your policy/password.",url), err)
 	}
@@ -437,8 +421,8 @@ func initAMQP10() {
 		)
 		if err != nil {
 			// If the team provided an Application Insights key, let's track that exception
-			if customTelemetryClient != nil {
-				customTelemetryClient.TrackException(err)
+			if CustomTelemetryClient != nil {
+				CustomTelemetryClient.TrackException(err)
 			}
 			log.Fatal("\t\tError creating sender link: ", err)
 		}
@@ -457,9 +441,12 @@ func initAMQP10() {
 }
 
 // addOrderToAMQP10 Adds the order to AMQP 1.0 (sends to the Default ConsumerGroup)
-func addOrderToAMQP10(order Order) {
+func addOrderToAMQP10(order Order) bool {
+	var success bool
+	
 	if amqp10Client == nil {
 		log.Println("Skipping AMQP. It is either not configured or improperly configured")
+		success = true
 	} else {
 		// Only run this part if AMQP is configured
 		success := false
@@ -514,11 +501,11 @@ func addOrderToAMQP10(order Order) {
 			eventTelemetry.Properties["type"] = "servicebus"
 			eventTelemetry.Properties["service"] = "CaptureOrder"
 			eventTelemetry.Properties["orderId"] = order.OrderID
-			challengeTelemetryClient.Track(eventTelemetry)
+			ChallengeTelemetryClient.Track(eventTelemetry)
 		}
 
 		// Track the dependency, if the team provided an Application Insights key, let's track that dependency
-		if customTelemetryClient != nil {
+		if CustomTelemetryClient != nil {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
 				"ServiceBus",
 				"AMQP",
@@ -531,21 +518,21 @@ func addOrderToAMQP10(order Order) {
 			}
 
 			dependency.MarkTime(startTime, endTime)
-			customTelemetryClient.Track(dependency)
+			CustomTelemetryClient.Track(dependency)
 		}
-
 		log.Printf("Sent to AMQP 1.0 (ServiceBus) - %t, %s: %s", success, amqpURL, body)
 	}
+	return success
 }
 
 func trackException(err error) {
 	if err != nil {
 		log.Println(err)
-		if challengeTelemetryClient != nil {
-			challengeTelemetryClient.TrackException(err)
+		if ChallengeTelemetryClient != nil {
+			ChallengeTelemetryClient.TrackException(err)
 		}
-		if customTelemetryClient != nil {
-			customTelemetryClient.TrackException(err)
+		if CustomTelemetryClient != nil {
+			CustomTelemetryClient.TrackException(err)
 		}
 	}
 }
