@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"time"
+	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/Microsoft/ApplicationInsights-Go/appinsights"
 )
