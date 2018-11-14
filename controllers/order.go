@@ -88,7 +88,7 @@ func trackRequest(requestStartTime time.Time, requestEndTime time.Time, requestS
 	requestTelemetry := appinsights.NewRequestTelemetry("POST", "fulfillorders/orders/v1", 0, responseCode)
 	requestTelemetry.MarkTime(requestStartTime, requestEndTime)
 	requestTelemetry.Properties["team"] = teamName
-	requestTelemetry.Properties["service"] = "FulfillOrder"
+	requestTelemetry.Properties["service"] = "CaptureOrder"
 
 	challengeTelemetryClient.Track(requestTelemetry)
 	if customTelemetryClient != nil {
