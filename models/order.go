@@ -92,6 +92,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 	order.Status = "Open"
 
 	log.Print("Inserting into MongoDB URL: ", mongoHost, " CosmosDB: ", isCosmosDb)
+	log.Println(order)
 
 	// insert Document in collection
 	mongoDBCollection := mongoDBSessionCopy.DB(mongoDatabaseName).C(mongoCollectionName)
@@ -104,7 +105,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 		}
 		log.Println("Problem inserting data: ", mongoDBSessionError)
 	} else {
-		log.Println("Inserted order:", order)
+		log.Println("Inserted order:", order.OrderID)
 		success = true
 	}
 
