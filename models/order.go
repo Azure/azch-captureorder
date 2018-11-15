@@ -27,7 +27,6 @@ type Order struct {
 	EmailAddress      string  `required:"true" description:"Email address of the customer"`
 	PreferredLanguage string  `required:"false" description:"Preferred Language of the customer"`
 	Product           string  `required:"false" description:"Product ordered by the customer"`
-	Partition         string  `required:"false" description:"MongoDB Partition. Generated."`
 	Total             float64 `required:"false" description:"Order total"`
 	Source            string  `required:"false" description:"Source backend e.g. App Service, Container instance, K8 cluster etc"`
 	Status            string  `required:"true" description:"Order Status"`
@@ -50,7 +49,7 @@ var mongoDBSessionError error
 // MongoDB database and collection names
 var mongoDatabaseName = "akschallenge"
 var mongoCollectionName = "orders"
-var mongoCollectionShardKey = "partition"
+var mongoCollectionShardKey = "orderid"
 
 // AMQP 1.0 variables
 var amqp10Client *amqp10.Client
@@ -89,15 +88,13 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 	mongoDBSessionCopy := mongoDBSession.Copy()
 	defer mongoDBSessionCopy.Close()
 
-	log.Println("Team " + teamName)
-
 	// Select a random partition
-	rand.Seed(time.Now().UnixNano())
-	partitionKey := strconv.Itoa(random(0, 11))
-	order.Partition = fmt.Sprintf("partition-%s", partitionKey)
+	//rand.Seed(time.Now().UnixNano())
+	//partitionKey := strconv.Itoa(random(0, 11))
+	//order.Partition = fmt.Sprintf("partition-%s", partitionKey)
 
-	NewOrderID := bson.NewObjectId()
-	order.OrderID = NewOrderID.Hex()
+	//NewOrderID := bson.NewObjectId()
+	//order.OrderID = NewOrderID.Hex()
 
 	order.Status = "Open"
 	if order.Source == "" || order.Source == "string" {
@@ -108,8 +105,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 
 	// insert Document in collection
 	mongoDBCollection := mongoDBSessionCopy.DB(mongoDatabaseName).C(mongoCollectionName)
-	mongoDBSessionError = mongoDBCollection.Insert(order)
-	log.Println("Inserted order:", order)
+	doc,mongoDBSessionError := mongoDBCollection.Upsert(nil,order)
 
 	if mongoDBSessionError != nil {
 		// If the team provided an Application Insights key, let's track that exception
@@ -117,8 +113,12 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 			CustomTelemetryClient.TrackException(mongoDBSessionError)
 		}
 		log.Println("Problem inserting data: ", mongoDBSessionError)
-		log.Println("_id:", order)
 	} else {
+		// Retrieve the inserted ID
+		if doc.UpsertedId != nil {
+			order.OrderID = doc.UpsertedId.(bson.ObjectId).Hex()
+		}
+		log.Println("Inserted order:", order)
 		success = true
 	}
 
