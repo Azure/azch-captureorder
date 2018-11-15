@@ -33,11 +33,8 @@ definitions:
     required:
     - ID
     - EmailAddress
-    - PreferredLanguage
     - Product
-    - Partition
     - Total
-    - Source
     - Status
     type: object
     properties:
@@ -52,14 +49,6 @@ definitions:
         type: string
       Product:
         description: Product ordered by the customer
-        type: string
-
-      Partition:
-        description: MongoDB partition. Generated.
-        type: string
-      Source:
-        description: Source backend e.g. App Service, Container instance, K8 cluster
-          etc
         type: string
       Status:
         description: Order Status
