@@ -49,7 +49,7 @@ var mongoDBSessionError error
 // MongoDB database and collection names
 var mongoDatabaseName = "akschallenge"
 var mongoCollectionName = "orders"
-var mongoCollectionShardKey = "orderid"
+var mongoCollectionShardKey = "_id"
 
 // AMQP 1.0 variables
 var amqp10Client *amqp10.Client
@@ -88,13 +88,8 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 	mongoDBSessionCopy := mongoDBSession.Copy()
 	defer mongoDBSessionCopy.Close()
 
-	// Select a random partition
-	//rand.Seed(time.Now().UnixNano())
-	//partitionKey := strconv.Itoa(random(0, 11))
-	//order.Partition = fmt.Sprintf("partition-%s", partitionKey)
-
-	//NewOrderID := bson.NewObjectId()
-	//order.OrderID = NewOrderID.Hex()
+	NewOrderID := bson.NewObjectId()
+	order.OrderID = NewOrderID.Hex()
 
 	order.Status = "Open"
 	if order.Source == "" || order.Source == "string" {
@@ -105,7 +100,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 
 	// insert Document in collection
 	mongoDBCollection := mongoDBSessionCopy.DB(mongoDatabaseName).C(mongoCollectionName)
-	doc,mongoDBSessionError := mongoDBCollection.Upsert(nil,order)
+	mongoDBSessionError = mongoDBCollection.Insert(bson.M{"_id": NewOrderID},order)
 
 	if mongoDBSessionError != nil {
 		// If the team provided an Application Insights key, let's track that exception
@@ -114,10 +109,6 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 		}
 		log.Println("Problem inserting data: ", mongoDBSessionError)
 	} else {
-		// Retrieve the inserted ID
-		if doc.UpsertedId != nil {
-			order.OrderID = doc.UpsertedId.(bson.ObjectId).Hex()
-		}
 		log.Println("Inserted order:", order)
 		success = true
 	}
