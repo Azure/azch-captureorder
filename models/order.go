@@ -97,7 +97,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 	order.Partition = fmt.Sprintf("partition-%s", partitionKey)
 
 	NewOrderID := bson.NewObjectId()
-	order.OrderID = NewOrderID.Hex()+ "-" + partitionKey
+	order.OrderID = NewOrderID.Hex()
 
 	order.Status = "Open"
 	if order.Source == "" || order.Source == "string" {
