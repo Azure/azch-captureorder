@@ -420,7 +420,7 @@ func addOrderToAMQP10(orderId string) bool {
 		success = true
 	} else {
 		// Only run this part if AMQP is configured
-		success := false
+		success = false
 		var err error
 		startTime := time.Now()
 		body := fmt.Sprintf("{\"order\": \"%s\", \"source\": \"%s\"}", orderId, teamName)
