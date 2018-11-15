@@ -440,6 +440,7 @@ func addOrderToAMQP10(orderId string) bool {
 			log.Println("Attempting to send the AMQP message: ", body)
 			err = amqpSender.Send(amqp10Context, amqp10.NewMessage([]byte(body)))
 			if err != nil {
+				success = false // this failed
 				switch t := err.(type) {
 				default:
 					log.Println("Encountered an error sending AMQP. Will not retry: ", err)						
@@ -451,12 +452,11 @@ func addOrderToAMQP10(orderId string) bool {
 					log.Println("Service Bus detached. Will reconnect and retry: " , t, err)
 					initAMQP10()
 			   }
+			} else {
+				success = true // finally succeeded
 			}
 			return attempt < 3, err
 		})
-
-		// Now check after possible retries if the message was sent
-		success = (err == nil)
 
 		// Cancel the context and close the sender
 		cancel()
