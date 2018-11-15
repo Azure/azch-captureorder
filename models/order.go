@@ -48,7 +48,7 @@ var mongoDBSession *mgo.Session
 var mongoDBSessionError error
 
 // MongoDB database and collection names
-var mongoDatabaseName = "k8orders"
+var mongoDatabaseName = "akschallenge"
 var mongoCollectionName = "orders"
 var mongoCollectionShardKey = "partition"
 
