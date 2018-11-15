@@ -49,7 +49,7 @@ var mongoDBSessionError error
 // MongoDB database and collection names
 var mongoDatabaseName = "akschallenge"
 var mongoCollectionName = "orders"
-var mongoCollectionShardKey = "_id"
+var mongoCollectionShardKey = "orderid"
 
 // AMQP 1.0 variables
 var amqp10Client *amqp10.Client
