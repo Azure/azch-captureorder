@@ -57,14 +57,12 @@ func (this *OrderController) Post() {
 	// Inject telemetry clients
 	models.CustomTelemetryClient = customTelemetryClient;
 	models.ChallengeTelemetryClient = challengeTelemetryClient;
-
-	models.TrackInitialOrder(ob)
 	
 	// Track the request
 	requestStartTime := time.Now()
 
 	// Add the order to MongoDB
-	addedOrder, err := models.AddOrderToMongoDB(ob)
+	orderID, err := models.AddOrderToMongoDB(ob)
 	var orderAddedToMongoDb = false
 	var orderAddedToAMQP = false
 
@@ -72,10 +70,10 @@ func (this *OrderController) Post() {
 		orderAddedToMongoDb = true
 
 		// Add the order to AMQP
-		orderAddedToAMQP = models.AddOrderToAMQP(addedOrder)
+		orderAddedToAMQP = models.AddOrderToAMQP(orderID)
 
 		// return
-		this.Data["json"] = map[string]string{"orderId": addedOrder.OrderID}
+		this.Data["json"] = map[string]string{"orderId": orderID}
 	} else {
 		this.Data["json"] = map[string]string{"error": "order not added to MongoDB. Check logs: " + err.Error()}
 		this.Ctx.Output.SetStatus(500)

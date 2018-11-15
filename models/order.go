@@ -24,7 +24,6 @@ import (
 // Order represents the order json
 type Order struct {
 	ID           			bson.ObjectId		`json:"id" bson:"_id,omitempty"`
-	OrderID           string  				`json:"orderId"`
 	EmailAddress      string  				`json:"emailAddress"`
 	Product           string  				`json:"product"`
 	Total             float64 				`json:"total"`
@@ -48,7 +47,7 @@ var mongoDBSessionError error
 // MongoDB database and collection names
 var mongoDatabaseName = "akschallenge"
 var mongoCollectionName = "orders"
-var mongoCollectionShardKey = "orderid"
+var mongoCollectionShardKey = "_id"
 
 // AMQP 1.0 variables
 var amqp10Client *amqp10.Client
@@ -64,22 +63,8 @@ var CustomTelemetryClient appinsights.TelemetryClient
 var isCosmosDb = strings.Contains(mongoHost, "documents.azure.com")
 var db string // CosmosDB or MongoDB?
 
-// TrackInitialOrder send telemetry data for initial order, to track challenge
-func TrackInitialOrder(order Order) {
-	eventTelemetry := appinsights.NewEventTelemetry("Initial order")
-	eventTelemetry.Properties["team"] = teamName
-	eventTelemetry.Properties["sequence"] = "0"
-	eventTelemetry.Properties["type"] = "http"
-	eventTelemetry.Properties["service"] = "CaptureOrder"
-	eventTelemetry.Properties["orderId"] = order.OrderID
-	ChallengeTelemetryClient.Track(eventTelemetry)
-	if CustomTelemetryClient != nil {
-		CustomTelemetryClient.Track(eventTelemetry)
-	}
-}
-
 // AddOrderToMongoDB Adds the order to MongoDB/CosmosDB
-func AddOrderToMongoDB(order Order) (Order, error) {
+func AddOrderToMongoDB(order Order) (string, error) {
 	success := false
 	startTime := time.Now()
 
@@ -88,11 +73,10 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 	defer mongoDBSessionCopy.Close()
 
 	order.ID = bson.NewObjectId()
-	order.OrderID = order.ID.Hex()
+	StringOrderID := order.ID.Hex()
 	order.Status = "Open"
 
 	log.Print("Inserting into MongoDB URL: ", mongoHost, " CosmosDB: ", isCosmosDb)
-	log.Println(order)
 
 	// insert Document in collection
 	mongoDBCollection := mongoDBSessionCopy.DB(mongoDatabaseName).C(mongoCollectionName)
@@ -105,7 +89,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 		}
 		log.Println("Problem inserting data: ", mongoDBSessionError)
 	} else {
-		log.Println("Inserted order:", order.OrderID)
+		log.Println("Inserted order:", StringOrderID)
 		success = true
 	}
 
@@ -118,7 +102,7 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 		eventTelemetry.Properties["sequence"] = "1"
 		eventTelemetry.Properties["type"] = db
 		eventTelemetry.Properties["service"] = "CaptureOrder"
-		eventTelemetry.Properties["orderId"] = order.OrderID
+		eventTelemetry.Properties["orderId"] = StringOrderID
 		ChallengeTelemetryClient.Track(eventTelemetry)
 	}
 	
@@ -155,13 +139,13 @@ func AddOrderToMongoDB(order Order) (Order, error) {
 		}
 	}
 
-	return order, mongoDBSessionError
+	return StringOrderID, mongoDBSessionError
 }
 
 // AddOrderToAMQP Adds the order to AMQP (Service Bus Queue)
-func AddOrderToAMQP(order Order)  bool{
+func AddOrderToAMQP(orderId string)  bool{
 	if amqpURL != "" {
-		return addOrderToAMQP10(order)
+		return addOrderToAMQP10(orderId)
 	} else {
 		log.Println("Skipping inserting to Service Bus because it isn't configured yet.")
 		return true
@@ -428,7 +412,7 @@ func initAMQP10() {
 }
 
 // addOrderToAMQP10 Adds the order to AMQP 1.0 (sends to the Default ConsumerGroup)
-func addOrderToAMQP10(order Order) bool {
+func addOrderToAMQP10(orderId string) bool {
 	var success bool
 	
 	if amqp10Client == nil {
@@ -439,7 +423,7 @@ func addOrderToAMQP10(order Order) bool {
 		success := false
 		var err error
 		startTime := time.Now()
-		body := fmt.Sprintf("{\"order\": \"%s\", \"source\": \"%s\"}", order.OrderID, teamName)
+		body := fmt.Sprintf("{\"order\": \"%s\", \"source\": \"%s\"}", orderId, teamName)
 
 		// Get an empty context
 		amqp10Context := context.Background()
@@ -487,7 +471,7 @@ func addOrderToAMQP10(order Order) bool {
 			eventTelemetry.Properties["sequence"] = "2"
 			eventTelemetry.Properties["type"] = "servicebus"
 			eventTelemetry.Properties["service"] = "CaptureOrder"
-			eventTelemetry.Properties["orderId"] = order.OrderID
+			eventTelemetry.Properties["orderId"] = orderId
 			ChallengeTelemetryClient.Track(eventTelemetry)
 		}
 
