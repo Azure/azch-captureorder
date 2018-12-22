@@ -161,7 +161,7 @@ func init() {
 	validateVariable(mongoHost, "MONGOHOST")
 	validateVariable(mongoUsername, "MONGOUSERNAME")
 	validateVariable(mongoPassword, "MONGOPASSWORD")
-	validateVariable(amqpURL, "AMQPURL")
+	//validateVariable(amqpURL, "AMQPURL")
 	validateVariable(teamName, "TEAMNAME")
 
 	var mongoPoolLimitEnv = os.Getenv("MONGOPOOL_LIMIT")

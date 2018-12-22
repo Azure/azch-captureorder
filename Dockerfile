@@ -36,9 +36,6 @@ ENV CHALLENGEAPPINSIGHTS_KEY=0e90ab6f-79ee-466b-a1e7-fe469a0767da
 # Challenge Logging
 ENV TEAMNAME=
 
-# AMQP for Service Bus
-ENV AMQPURL=
-
 # Mongo/Cosmos
 ENV MONGOHOST=
 ENV MONGOUSER=
