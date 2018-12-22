@@ -72,10 +72,8 @@ func (this *OrderController) Post() {
 		// Add the order to AMQP
 		orderAddedToAMQP = models.AddOrderToAMQP(orderID)
 
-		//fmt.Printf("[%s] orderid: %s mongo: %b amqp: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb, orderAddedToAMQP)
-		//trackRequest(requestStartTime, time.Now(), orderAddedToMongoDb && orderAddedToAMQP)
-		fmt.Printf("[%s] orderid: %s mongo: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb)
-		trackRequest(requestStartTime, time.Now(), orderAddedToMongoDb)
+		fmt.Printf("[%s] orderid: %s mongo: %b amqp: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb, orderAddedToAMQP)
+		trackRequest(requestStartTime, time.Now(), orderAddedToMongoDb && orderAddedToAMQP)
 
 		// return
 		this.Data["json"] = map[string]string{"orderId": orderID}
@@ -83,8 +81,7 @@ func (this *OrderController) Post() {
 		this.Data["json"] = map[string]string{"error": "order not added to MongoDB. Check logs: " + err.Error()}
 		this.Ctx.Output.SetStatus(500)
 
-		//fmt.Printf("[%s] orderid: %s mongo: %b amqp: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb, orderAddedToAMQP)
-		fmt.Printf("[%s] orderid: %s mongo: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb)
+		fmt.Printf("[%s] orderid: %s mongo: %b amqp: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb, orderAddedToAMQP)
 		trackRequest(requestStartTime, time.Now(), false)
 	}
 	
