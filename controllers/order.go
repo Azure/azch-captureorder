@@ -70,7 +70,7 @@ func (this *OrderController) Post() {
 		orderAddedToMongoDb = true
 
 		// Add the order to AMQP
-		//orderAddedToAMQP = models.AddOrderToAMQP(orderID)
+		orderAddedToAMQP = models.AddOrderToAMQP(orderID)
 
 		//fmt.Printf("[%s] orderid: %s mongo: %b amqp: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb, orderAddedToAMQP)
 		//trackRequest(requestStartTime, time.Now(), orderAddedToMongoDb && orderAddedToAMQP)

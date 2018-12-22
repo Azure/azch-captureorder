@@ -143,13 +143,16 @@ func AddOrderToMongoDB(order Order) (string, error) {
 }
 
 // AddOrderToAMQP Adds the order to AMQP (Service Bus Queue)
-func AddOrderToAMQP(orderId string)  bool{
-	if amqpURL != "" {
-		return addOrderToAMQP10(orderId)
-	} else {
-		log.Println("Skipping inserting to Service Bus because it isn't configured yet.")
-		return true
+func AddOrderToAMQP(orderId string)  bool {
+	if (false) { // dumb disable
+		if amqpURL != "" {
+			return addOrderToAMQP10(orderId)
+		} else {
+			log.Println("Skipping inserting to Service Bus because it isn't configured yet.")
+			return true
+		}
 	}
+	return true
 }
 
 //// BEGIN: NON EXPORTED FUNCTIONS
