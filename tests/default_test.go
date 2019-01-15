@@ -6,16 +6,8 @@ import (
 	"testing"
 	"runtime"
 	"path/filepath"
-<<<<<<< HEAD
-<<<<<<< HEAD
-	_ "hackcaptureorder/routers"
-=======
-	_ "captureorderfd/routers"
->>>>>>> 752b08c51637b3fa2b2e71295a8749a3a55addfd
-=======
-	_ "captureorderfd/routers"
->>>>>>> 25ede2e870565f5f07aa493fe98fe3a9030e1c08
-
+	"hackcaptureorder/routers"
+	"captureorderfd/routers"
 	"github.com/astaxie/beego"
 	. "github.com/smartystreets/goconvey/convey"
 )
