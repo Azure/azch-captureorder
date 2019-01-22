@@ -32,7 +32,6 @@ The following environment variables need to be passed to the container:
 
 ```
 ENV TEAMNAME=[YourTeamName]
-ENV APPINSIGHTS_KEY=[YourCustomApplicationInsightsKey] # Optional, create your own App Insights resource
 ENV CHALLENGEAPPINSIGHTS_KEY=[Challenge Application Insights Key] # Override, if given one by the proctors
 ```
 
@@ -63,14 +62,6 @@ ENV MONGOUSER=<cosmosdb username>
 ```
 ENV MONGOPASSWORD=<cosmosdb primary password>
 ```
-
-### For Service Bus
-
-```
-ENV AMQPURL=amqps://<policy name>:<policy key>@<servicebus namespace>.servicebus.windows.net/<queuename>
-```
-
-> Make sure your _policy key_ is URL Encoded. Use a tool like: <https://www.url-encode-decode.com/>
 
 ## Contributing
 

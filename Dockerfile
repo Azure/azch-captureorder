@@ -27,8 +27,6 @@ WORKDIR /root/
 COPY --from=builder /go/src/captureorderfd .
 
 # Define environment variables
-# Application Insights
-ENV APPINSIGHTS_KEY=
 
 # PLEASE DO NOT OVERRIDE UNLESS INSTRUCTED BY PROCTORS
 ENV CHALLENGEAPPINSIGHTS_KEY=0e90ab6f-79ee-466b-a1e7-fe469a0767da
