@@ -63,6 +63,7 @@ var CustomTelemetryClient appinsights.TelemetryClient
 var isCosmosDb = strings.Contains(mongoHost, "documents.azure.com")
 var db string // CosmosDB or MongoDB?
 
+
 // AddOrderToMongoDB Adds the order to MongoDB/CosmosDB
 func AddOrderToMongoDB(order Order) (string, error) {
 	success := false
@@ -76,7 +77,7 @@ func AddOrderToMongoDB(order Order) (string, error) {
 	StringOrderID := order.ID.Hex()
 	order.Status = "Open"
 
-	log.Print("Inserting into MongoDB URL: ", mongoHost, " CosmosDB: ", isCosmosDb)
+	log.Println("Inserting into MongoDB URL: ", mongoHost, " CosmosDB: ", isCosmosDb)
 
 	// insert Document in collection
 	mongoDBCollection := mongoDBSessionCopy.DB(mongoDatabaseName).C(mongoCollectionName)
@@ -87,7 +88,7 @@ func AddOrderToMongoDB(order Order) (string, error) {
 		if CustomTelemetryClient != nil {
 			CustomTelemetryClient.TrackException(mongoDBSessionError)
 		}
-		log.Println("Problem inserting data: ", mongoDBSessionError)
+		printErr("Problem inserting data: ", mongoDBSessionError)
 	} else {
 		log.Println("Inserted order:", StringOrderID)
 		success = true
@@ -139,7 +140,88 @@ func AddOrderToMongoDB(order Order) (string, error) {
 		}
 	}
 
+	if(mongoDBSessionError != nil) {
+		printErr("MongoDB session error while inserting order: ", mongoDBSessionError.Error())
+	}
 	return StringOrderID, mongoDBSessionError
+}
+
+// GetNumberOfOrdersInDB
+func GetNumberOfOrdersInDB() (int, error) {
+	success := false
+	startTime := time.Now()
+
+	// Use the existing mongoDBSessionCopy
+	mongoDBSessionCopy := mongoDBSession.Copy()
+	defer mongoDBSessionCopy.Close()
+
+	log.Println("Querying MongoDB URL: ", mongoHost, " CosmosDB: ", isCosmosDb)
+
+	// get the Document in collection
+	mongoDBCollection := mongoDBSessionCopy.DB(mongoDatabaseName).C(mongoCollectionName)
+	orderCount,mongoDBSessionError := mongoDBCollection.Count()
+
+	if mongoDBSessionError != nil {
+		// If the team provided an Application Insights key, let's track that exception
+		if CustomTelemetryClient != nil {
+			CustomTelemetryClient.TrackException(mongoDBSessionError)
+		}
+		printErr("Problem quering number of orders: ", mongoDBSessionError)
+	} else {
+		log.Println("Order count:", orderCount)
+		success = true
+	}
+
+	endTime := time.Now()
+
+	if success {
+		// Track the event for the challenge purposes
+		eventTelemetry := appinsights.NewEventTelemetry("Order Count on " + db)
+		eventTelemetry.Properties["team"] = teamName
+		eventTelemetry.Properties["sequence"] = "z"
+		eventTelemetry.Properties["type"] = db
+		eventTelemetry.Properties["service"] = "CaptureOrder"
+		eventTelemetry.Properties["count"] = strconv.Itoa(orderCount)
+		ChallengeTelemetryClient.Track(eventTelemetry)
+	}
+	
+	// Track the dependency, if the team provided an Application Insights key, let's track that dependency
+	if CustomTelemetryClient != nil {
+		if isCosmosDb {
+			dependency := appinsights.NewRemoteDependencyTelemetry(
+				"CosmosDB",
+				"MongoDB",
+				mongoHost,
+				success)
+			dependency.Data = "Count orders"		
+
+			if mongoDBSessionError != nil {
+				dependency.ResultCode = mongoDBSessionError.Error()
+			}
+				
+			dependency.MarkTime(startTime, endTime)
+			CustomTelemetryClient.Track(dependency)	
+		} else {
+			dependency := appinsights.NewRemoteDependencyTelemetry(
+				"MongoDB",
+				"MongoDB",
+				mongoHost,
+				success)
+			dependency.Data = "Count orders"	
+
+			if mongoDBSessionError != nil {
+				dependency.ResultCode = mongoDBSessionError.Error()
+			}
+
+			dependency.MarkTime(startTime, endTime)
+			CustomTelemetryClient.Track(dependency)		
+		}
+	}
+
+	if(mongoDBSessionError != nil) {
+		printErr("MongoDB session error while retreiving count: ", mongoDBSessionError.Error())
+	}
+	return orderCount, mongoDBSessionError
 }
 
 // AddOrderToAMQP Adds the order to AMQP (Service Bus Queue)
@@ -157,6 +239,9 @@ func AddOrderToAMQP(orderId string)  bool {
 
 //// BEGIN: NON EXPORTED FUNCTIONS
 func init() {
+	
+	// Log to stdout by default
+	log.SetOutput(os.Stdout)
 
 	rand.Seed(time.Now().UnixNano())
 
@@ -248,18 +333,20 @@ func initMongoDial() (success bool, mErr error) {
 	log.Println("Attempting to connect to MongoDB")
 	mongoDBSession, mongoDBSessionError = mgo.DialWithInfo(dialInfo)
 	if mongoDBSessionError != nil {
-		log.Println(fmt.Sprintf("Can't connect to mongo at [%s], go error: ", mongoHost+mongoPort), mongoDBSessionError)
+		printErr(fmt.Sprintf("Can't connect to mongo at [%s], go error: ", mongoHost+mongoPort), mongoDBSessionError)
 		trackException(mongoDBSessionError)
 		mErr = mongoDBSessionError
 	} else {
 		success = true
 		log.Println("\tConnected")
+
+		mongoDBSession.SetMode(mgo.Monotonic, true)
+		
+		// Limit connection pool to avoid running into Request Rate Too Large on CosmosDB
+		mongoDBSession.SetPoolLimit(mongoPoolLimit)
 	}
 
-	mongoDBSession.SetMode(mgo.Monotonic, true)
 
-	// Limit connection pool to avoid running into Request Rate Too Large on CosmosDB
-	mongoDBSession.SetPoolLimit(mongoPoolLimit)
 
 	endTime := time.Now()
 
@@ -336,7 +423,7 @@ func initMongo() {
 	if err != nil {
 		trackException(err)
 		// The collection is most likely created and already sharded. I couldn't find a more elegant way to check this.
-		log.Println("Could not create/re-create sharded MongoDB collection. Either collection is already sharded or sharding is not supported. You can ignore this error: ", err)
+		printErr("Could not create/re-create sharded MongoDB collection. Either collection is already sharded or sharding is not supported. You can ignore this error: ", err)
 	} else {
 		log.Println("Created MongoDB collection: ")
 		log.Println(result)
@@ -402,7 +489,7 @@ func initAMQP10() {
 		}
 
 		if err != nil {
-			log.Println("Error connecting to Service Bus instance. Will retry in 5 seconds:", err)
+			printErr("Error connecting to Service Bus instance. Will retry in 5 seconds:", err)
 		  	time.Sleep(5 * time.Second) // wait
 		}
 		return attempt < 3, err
@@ -410,7 +497,7 @@ func initAMQP10() {
 	
 	  // If we still can't connect
 	if err != nil {
-		log.Println("Couldn't connect to Service Bus after 3 retries:", err)
+		printErr("Couldn't connect to Service Bus after 3 retries:", err)
 	}
 }
 
@@ -446,13 +533,13 @@ func addOrderToAMQP10(orderId string) bool {
 				success = false // this failed
 				switch t := err.(type) {
 				default:
-					log.Println("Encountered an error sending AMQP. Will not retry: ", err)						
+					printErr("Encountered an error sending AMQP. Will not retry: ", err)						
 					// If the team provided an Application Insights key, let's track that exception
 					trackException(err)
 					// This is an unhandled error, don't retry
 					return false, err
 				case *amqp10.DetachError:
-					log.Println("Service Bus detached. Will reconnect and retry: " , t, err)
+					printErr("Service Bus detached. Will reconnect and retry: " , t, err)
 					initAMQP10()
 			   }
 			} else {
@@ -501,7 +588,7 @@ func addOrderToAMQP10(orderId string) bool {
 
 func trackException(err error) {
 	if err != nil {
-		log.Println(err)
+		printErr(err)
 		if ChallengeTelemetryClient != nil {
 			ChallengeTelemetryClient.TrackException(err)
 		}
@@ -514,6 +601,12 @@ func trackException(err error) {
 // random: Generates a random number
 func random(min int, max int) int {
 	return rand.Intn(max-min) + min
+}
+
+func printErr(v ...interface{}) {
+	log.SetOutput(os.Stderr)
+	log.Println(v);
+	log.SetOutput(os.Stdout)
 }
 
 //// END: NON EXPORTED FUNCTIONS

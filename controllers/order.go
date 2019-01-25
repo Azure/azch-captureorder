@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 	"fmt"
+	"strconv"
 	"github.com/astaxie/beego"
 	"github.com/Microsoft/ApplicationInsights-Go/appinsights"
 )
@@ -73,7 +74,7 @@ func (this *OrderController) Post() {
 		orderAddedToAMQP = models.AddOrderToAMQP(orderID)
 
 		fmt.Printf("[%s] orderid: %s mongo: %b amqp: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb, orderAddedToAMQP)
-		trackRequest(requestStartTime, time.Now(), orderAddedToMongoDb && orderAddedToAMQP)
+		trackRequest(requestStartTime, time.Now(), orderAddedToMongoDb && orderAddedToAMQP, "POST", "captureorder.svc/orders/v1")
 
 		// return
 		this.Data["json"] = map[string]string{"orderId": orderID}
@@ -82,19 +83,55 @@ func (this *OrderController) Post() {
 		this.Ctx.Output.SetStatus(500)
 
 		fmt.Printf("[%s] orderid: %s mongo: %b amqp: %b\n", time.Now().Format(time.UnixDate), orderID, orderAddedToMongoDb, orderAddedToAMQP)
-		trackRequest(requestStartTime, time.Now(), false)
+		trackRequest(requestStartTime, time.Now(), false, "POST", "captureorder.svc/orders/v1")
 	}
 	
 
 	this.ServeJSON()
 }
 
-func trackRequest(requestStartTime time.Time, requestEndTime time.Time, requestSuccess bool) {
+// @Title Capture Order
+// @Description Capture order GET
+// @Success 200 {string} count of orders in the database
+// @Failure 403 body is empty
+// @router / [post]
+func (this *OrderController) Get() {
+
+	var ob models.Order
+	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
+
+	// Inject telemetry clients
+	models.CustomTelemetryClient = customTelemetryClient;
+	models.ChallengeTelemetryClient = challengeTelemetryClient;
+	
+	// Track the request
+	requestStartTime := time.Now()
+
+	// Get number of orders in MongoDB
+	orderCount, err := models.GetNumberOfOrdersInDB()
+	var orderCountQueried = false
+
+	if err == nil {
+		orderCountQueried = true
+		trackRequest(requestStartTime, time.Now(), orderCountQueried, "GET", "captureorder.svc/orders/v1")
+
+		// return
+		this.Data["json"] = map[string]string{"orderCount": strconv.Itoa(orderCount), "timestamp": time.Now().String()}
+	} else {
+		this.Data["json"] = map[string]string{"error": "couldn't query order count. Check logs: " + err.Error()}
+		this.Ctx.Output.SetStatus(500)
+		trackRequest(requestStartTime, time.Now(), false, "GET", "captureorder.svc/orders/v1")
+	}
+	
+	this.ServeJSON()
+}
+
+func trackRequest(requestStartTime time.Time, requestEndTime time.Time, requestSuccess bool, method string, endpoint string) {
 	var responseCode = "200"
 	if requestSuccess != true {
 		responseCode = "500"
 	} 
-	requestTelemetry := appinsights.NewRequestTelemetry("POST", "captureorder.svc/orders/v1", 0, responseCode)
+	requestTelemetry := appinsights.NewRequestTelemetry(method, endpoint, 0, responseCode)
 	requestTelemetry.MarkTime(requestStartTime, requestEndTime)
 	requestTelemetry.Properties["team"] = teamName
 	requestTelemetry.Properties["service"] = "CaptureOrder"

@@ -7,7 +7,7 @@
   },
   "basePath": "/v1",
   "paths": {
-    "/order": {
+    "/posts": {
       "post": {
         "operationId": "post",
         "description": "Capture order",
