@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"context"
 	"fmt"
+	"io/ioutil"
 
 	"log"
 	"math/rand"
@@ -63,6 +64,17 @@ var CustomTelemetryClient appinsights.TelemetryClient
 var isCosmosDb = strings.Contains(mongoHost, "documents.azure.com")
 var db string // CosmosDB or MongoDB?
 
+// ReadMongoPasswordFromSecret reads the mongo password from the flexvol mount if present
+func ReadMongoPasswordFromSecret(file string) (string, error) {
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		return "", err
+	}
+
+	secret := string(b)
+	return secret, err
+
+}
 
 // AddOrderToMongoDB Adds the order to MongoDB/CosmosDB
 func AddOrderToMongoDB(order Order) (string, error) {
@@ -244,6 +256,16 @@ func init() {
 	log.SetOutput(os.Stdout)
 
 	rand.Seed(time.Now().UnixNano())
+
+	// If there is a mongo-password secret in the flexvol mount reset mongoPassword var 
+	if mongoPassword == "" {
+		secret, err := ReadMongoPasswordFromSecret("/kvmnt/mongo-password")
+		if err != nil {
+			fmt.Print(err)
+		}
+		mongoPassword = secret
+		fmt.Println(mongoPassword)
+	}
 
 	// Validate environment variables
 	validateVariable(mongoHost, "MONGOHOST")
