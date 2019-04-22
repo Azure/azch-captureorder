@@ -16,7 +16,7 @@ RUN go get gopkg.in/matryer/try.v1
 # Copy the application files
 COPY . .
 
-# Build
+# Build stage
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o captureorderfd .
 
 ## App stage
