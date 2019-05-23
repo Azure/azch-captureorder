@@ -1,3 +1,25 @@
+variables:
+
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'containerRegistryConnection'
+  imageRepository: 'captureorder'
+  containerRegistry: 'sabbour.azurecr.io'
+  dockerfilePath: '**/Dockerfile'
+  tag: '$(Build.BuildId)'
+  
+  # Kubernetes Namespace
+  k8sNamespace: 'dev'
+  imagePullSecret: 'sabbourb787-auth'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+  # Container environment variables
+  teamName: 'team-azch'
+  mongoHost: 'orders-mongo-mongodb.default.svc.cluster.local'
+  mongoUser: 'orders-user'
+  servicePort: 80
+
 stages:
 - stage: Build
   displayName: Build stage
@@ -12,8 +34,8 @@ stages:
       inputs:
         command: buildAndPush
         repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: containerRegistryConnection
+        dockerfile: $(dockerfileP ath)
+        containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
 
@@ -46,7 +68,7 @@ stages:
               action: createSecret
               secretName: $(imagePullSecret)
               namespace: $(k8sNamespace)
-              dockerRegistryEndpoint: containerRegistryConnection
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
 
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster

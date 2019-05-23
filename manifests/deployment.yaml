@@ -6,7 +6,7 @@ spec:
   selector:
       matchLabels:
         app: {{ imageRepository }}
-  replicas: {{ replicas }}
+  replicas: 2
   template:
       metadata:
         labels:
@@ -14,15 +14,15 @@ spec:
       spec:
         containers:
         - name: {{ imageRepository }}
-          image: {{ containerRegistryConnection.Authorization.Parameters.loginServer }}/{{ imageRepository }}:{{ buildId }}
+          image: {{ containerRegistryConnection.Authorization.Parameters.loginServer }}/{{ imageRepository }}:{{ tag }}
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
-              port: {{ internalContainerPort }}
+              port: 8080
               path: /healthz
           livenessProbe:
             httpGet:
-              port: {{ internalContainerPort }}
+              port: 8080
               path: /healthz
           resources:
             requests:
