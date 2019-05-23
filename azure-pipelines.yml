@@ -35,8 +35,8 @@ stages:
         artifactName: 'manifests'
         targetPath: 'manifests'
 
-- stage: Deploy to dev
-  displayName: Deploy stage
+- stage: DeployDev
+  displayName: Deploy to dev stage
   dependsOn: Build
 
   variables:
