@@ -2,6 +2,7 @@ variables:
 
   # Container registry service connection established during pipeline creation
   dockerRegistryServiceConnection: 'containerRegistryConnection'
+  kubernetesServiceConnection: 'aksworkshop-aksdelete-dev-1558580678713'
   imageRepository: 'captureorder'
   containerRegistry: 'sabbour.azurecr.io'
   dockerfilePath: '**/Dockerfile'
@@ -69,6 +70,7 @@ stages:
               secretName: $(imagePullSecret)
               namespace: $(k8sNamespace)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+              kubernetesServiceConnection: $(kubernetesServiceConnection)
 
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
@@ -83,3 +85,4 @@ stages:
                 $(imagePullSecret)
               containers: |
                 $(containerRegistry)/$(imageRepository):$(tag)
+              kubernetesServiceConnection: $(kubernetesServiceConnection)              
