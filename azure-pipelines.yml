@@ -1,6 +1,6 @@
 variables:
   
-  - group: captureorder-variablegroup # Variable Group containing the secret
+  - group: captureorder-variables # Variable Group containing the secret 'mongoPassword'
 
   - name: dockerRegistryServiceConnection
     value: 'containerRegistryConnection' # Container registry service connection established during pipeline creation
