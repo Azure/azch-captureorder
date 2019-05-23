@@ -92,7 +92,7 @@ stages:
             displayName: Patch the deployment environment variables
             inputs:
               action: patch
-              resourceToPatch: file
-              resourceFiletoPatch: $(System.ArtifactsDirectory)/manifests/deployment.yaml
+              resourceToPatch: captureorder
+              kind: Deployment
               namespace: $(k8sNamespace)
-              patch: '{"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}' # replace 'captureorder' with your deployment name
+              patch: '{"spec": {"template": {"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}}}' # replace 'captureorder' with your deployment name
