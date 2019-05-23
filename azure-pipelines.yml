@@ -6,7 +6,7 @@ variables:
     value: 'containerRegistryConnection' # replace with container registry service connection name established during pipeline creation
   
   - name: imageRepository
-    value: 'sabbour.azurecr.io/captureorder' # replace with your own repository/image name
+    value: 'captureorder' # replace with your own image name
 
   - name: tag
     value: '$(Build.BuildId)'
