@@ -1,25 +1,48 @@
 variables:
+  
+  - group: captureorder-variablegroup # Variable Group containing the secret
 
-  # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: 'containerRegistryConnection'
-  kubernetesServiceConnection: 'aksworkshop-aksdelete-dev-1558580678713'
-  imageRepository: 'captureorder'
-  containerRegistry: 'sabbour.azurecr.io'
-  dockerfilePath: '**/Dockerfile'
-  tag: '$(Build.BuildId)'
+  - name: dockerRegistryServiceConnection
+    value: 'containerRegistryConnection' # Container registry service connection established during pipeline creation
+  
+  - name: kubernetesServiceConnection
+    value: 'aksworkshop-aksdelete-dev-1558580678713'
+
+  - name: imageRepository
+    value: 'captureorder'
+
+  - name: containerRegistry
+    value: 'sabbour.azurecr.io'
+
+  - name: dockerfilePath
+    value: '**/Dockerfile'
+
+  - name: tag
+    value: '$(Build.BuildId)'
   
   # Kubernetes Namespace
-  k8sNamespace: 'dev'
-  imagePullSecret: 'myacr-pullsecret'
+  - name: k8sNamespace
+    value: 'dev'
+
+  - name: imagePullSecret
+    value: 'myacr-pullsecret'
 
   # Agent VM image name
-  vmImageName: 'ubuntu-latest'
+  - name: vmImageName
+    value: 'ubuntu-latest'
 
   # Container environment variables
-  teamName: 'team-azch'
-  mongoHost: 'orders-mongo-mongodb.default.svc.cluster.local'
-  mongoUser: 'orders-user'
-  servicePort: 80
+  - name: teamName
+    value: 'team-azch'
+
+  - name: mongoHost
+    value: 'orders-mongo-mongodb.default.svc.cluster.local'
+
+  - name: mongoUser
+    value: 'orders-user'
+
+  - name: servicePort
+    value: 80
 
 stages:
 - stage: Build
