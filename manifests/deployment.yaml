@@ -16,6 +16,8 @@ spec:
         - name: captureorder
           image: sabbour.azurecr.io/captureorder # replace with your own repository
           imagePullPolicy: Always
+          imagePullSecrets:
+            - name:  myacr-pullsecret # name of the imagePullSecret. This is created by the deployment pipeline.
           readinessProbe:
             httpGet:
               port: 8080

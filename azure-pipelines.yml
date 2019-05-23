@@ -10,10 +10,6 @@ variables:
 
   - name: tag
     value: '$(Build.BuildId)'
-  
-  # Kubernetes Namespace
-  - name: k8sNamespace
-    value: 'dev'
 
 stages:
 - stage: Build
@@ -39,15 +35,22 @@ stages:
         artifactName: 'manifests'
         targetPath: 'manifests'
 
-- stage: Deploy
+- stage: Deploy to dev
   displayName: Deploy stage
   dependsOn: Build
+
+  variables:
+  - name: k8sNamespace # Kubernetes Namespace to deploy to
+    value: 'dev'
+      
   jobs:
   - deployment: Deploy
-    displayName: Deploy job
+    displayName: Deploy to dev job
     pool:
       vmImage: ubuntu-latest
-    environment: 'aksworkshop.dev' # name of the environment to target
+
+    environment: 'aksworkshop.dev' # name of the environment to target. This will pull in the Kubernetes service connection automatically
+
     strategy:
       runOnce:
         deploy:
@@ -86,7 +89,7 @@ stages:
                 $(imageRepository):$(tag)
 
           - task: KubernetesManifest@0
-            displayName: Patching the deployment environment variables
+            displayName: Patch the deployment environment variables
             inputs:
               action: patch
               resourceToPatch: file
