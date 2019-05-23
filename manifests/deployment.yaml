@@ -51,5 +51,5 @@ spec:
                 key: mongoPassword
           ports:
           - containerPort: 80
-          imagePullSecrets:
-          - name:  myacr-pullsecret # name of the imagePullSecret. This is created by the deployment pipeline.
+        imagePullSecrets:
+        - name:  myacr-pullsecret # name of the imagePullSecret. This is created by the deployment pipeline.
