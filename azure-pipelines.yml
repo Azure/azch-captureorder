@@ -5,8 +5,8 @@ variables:
   - name: dockerRegistryServiceConnection
     value: 'containerRegistryConnection' # replace with container registry service connection name established during pipeline creation
   
-  - name: kubernetesServiceConnection
-    value: 'aksworkshop-aksdelete-dev-1558580678713' # replace with Kubernetes cluster service connection established after you create the environment
+  - name: imageRepository
+    value: 'sabbour.azurecr.io/captureorder' # replace with your own repository/image name
 
   - name: tag
     value: '$(Build.BuildId)'
@@ -28,7 +28,7 @@ stages:
       displayName: Build and push an image to container registry
       inputs:
         command: buildAndPush
-        repository: sabbour.azurecr.io/captureorder # replace with your own repository/image name
+        repository: $(imageRepository)
         dockerfile: '**/Dockerfile'
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
@@ -62,9 +62,8 @@ stages:
             inputs:
               action: createSecret
               secretName: 'myacr-pullsecret'
-              #namespace: $(k8sNamespace)
+              namespace: $(k8sNamespace)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-              #kubernetesServiceConnection: $(kubernetesServiceConnection)
 
           - task: KubernetesManifest@0
             displayName: Create secret for MongoDB
@@ -72,21 +71,19 @@ stages:
               action: createSecret
               secretName: mongodb
               secretType: generic
-              #namespace: $(k8sNamespace)
+              namespace: $(k8sNamespace)
               secretArguments: --from-literal=mongoHost=$(mongoHost) --from-literal=mongoUser=$(mongoUser) --from-literal=mongoPassword=$(mongoPassword)
-              #kubernetesServiceConnection: $(kubernetesServiceConnection)
 
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: deploy
-              #namespace: $(k8sNamespace)
+              namespace: $(k8sNamespace)
               manifests: $(System.ArtifactsDirectory)/manifests/*
               imagePullSecrets: |
                 'myacr-pullsecret'
               containers: |
-                sabbour.azurecr.io/captureorder:$(tag) # replace with your own repository/imagename
-              #kubernetesServiceConnection: $(kubernetesServiceConnection)      
+                $(imageRepository):$(tag)
 
           - task: KubernetesManifest@0
             displayName: Patching the deployment environment variables
@@ -94,6 +91,5 @@ stages:
               action: patch
               resourceToPatch: file
               resourceFiletoPatch: $(System.ArtifactsDirectory)/manifests/deployment.yaml
-              #namespace: $(k8sNamespace)
-              patch: '{"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}'
-              #kubernetesServiceConnection: $(kubernetesServiceConnection)        
+              namespace: $(k8sNamespace)
+              patch: '{"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}' # replace 'captureorder' with your deployment name
