@@ -13,7 +13,7 @@ stages:
         command: buildAndPush
         repository: $(imageRepository)
         dockerfile: $(dockerfilePath)
-        containerRegistry: $(containerRegistryConnection)
+        containerRegistry: containerRegistryConnection
         tags: |
           $(tag)
 
