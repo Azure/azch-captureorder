@@ -13,7 +13,7 @@ stages:
         command: buildAndPush
         repository: $(imageRepository)
         dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
+        containerRegistry: $(containerRegistryConnection)
         tags: |
           $(tag)
 
@@ -46,7 +46,7 @@ stages:
               action: createSecret
               secretName: $(imagePullSecret)
               namespace: $(k8sNamespace)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+              dockerRegistryEndpoint: $(containerRegistryConnection)
 
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
