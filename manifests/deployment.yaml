@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ imageRepository }}
+  name: captureorder
 spec:
   selector:
       matchLabels:
-        app: {{ imageRepository }}
+        app: captureorder
   replicas: 2
   template:
       metadata:
         labels:
-            app: {{ imageRepository }}
+            app: captureorder
       spec:
         containers:
-        - name: {{ imageRepository }}
-          image: {{ containerRegistryConnection.Authorization.Parameters.loginServer }}/{{ imageRepository }}:{{ tag }}
+        - name: captureorder
+          image: sabbour.azurecr.io/captureorder # replace with your own repository
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
@@ -33,12 +33,21 @@ spec:
               cpu: "500m"
           env:
           - name: TEAMNAME
-            value: {{ teamName }}
+            value: 'placeholder' # will be patched at deployment time by value of 'teamName' in the variable group
           - name: MONGOHOST
-            value: {{ mongoHost }}
+            valueFrom:
+              secretKeyRef:
+                name: mongoDB
+                key: mongoHost
           - name: MONGOUSER
-            value: {{ mongoUser }}
+            valueFrom:
+              secretKeyRef:
+                name: mongoDB
+                key: mongoUser
           - name: MONGOPASSWORD
-            value: {{ mongoPassword }}
+            valueFrom:
+              secretKeyRef:
+                name: mongoDB
+                key: mongoPassword
           ports:
-          - containerPort: {{ servicePort }}
+          - containerPort: 80

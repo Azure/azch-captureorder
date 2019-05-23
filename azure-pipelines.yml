@@ -1,21 +1,12 @@
 variables:
   
-  - group: captureorder-variables # Variable Group containing the secret 'mongoPassword'
+  - group: captureorder-variables # Variable Group containing  'teamName', 'mongoHost', 'mongoUser' and the secret 'mongoPassword'
 
   - name: dockerRegistryServiceConnection
-    value: 'containerRegistryConnection' # Container registry service connection established during pipeline creation
+    value: 'containerRegistryConnection' # replace with container registry service connection name established during pipeline creation
   
   - name: kubernetesServiceConnection
-    value: 'aksworkshop-aksdelete-dev-1558580678713'
-
-  - name: imageRepository
-    value: 'captureorder'
-
-  - name: containerRegistry
-    value: 'sabbour.azurecr.io'
-
-  - name: dockerfilePath
-    value: '**/Dockerfile'
+    value: 'aksworkshop-aksdelete-dev-1558580678713' # replace with Kubernetes cluster service connection established after you create the environment
 
   - name: tag
     value: '$(Build.BuildId)'
@@ -24,26 +15,6 @@ variables:
   - name: k8sNamespace
     value: 'dev'
 
-  - name: imagePullSecret
-    value: 'myacr-pullsecret'
-
-  # Agent VM image name
-  - name: vmImageName
-    value: 'ubuntu-latest'
-
-  # Container environment variables
-  - name: teamName
-    value: 'team-azch'
-
-  - name: mongoHost
-    value: 'orders-mongo-mongodb.default.svc.cluster.local'
-
-  - name: mongoUser
-    value: 'orders-user'
-
-  - name: servicePort
-    value: 80
-
 stages:
 - stage: Build
   displayName: Build stage
@@ -51,14 +22,14 @@ stages:
   - job: Build
     displayName: Build job
     pool:
-      vmImage: $(vmImageName)
+      vmImage: ubuntu-latest
     steps:
     - task: Docker@2
       displayName: Build and push an image to container registry
       inputs:
         command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
+        repository: sabbour.azurecr.io/captureorder # replace with your own repository/image name
+        dockerfile: '**/Dockerfile'
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
@@ -66,7 +37,7 @@ stages:
     - task: PublishPipelineArtifact@0
       inputs:
         artifactName: 'manifests'
-        targetPath: 'manifests' # Publish manifests folder which contains the Kubernetes manifest YAML files
+        targetPath: 'manifests'
 
 - stage: Deploy
   displayName: Deploy stage
@@ -75,8 +46,8 @@ stages:
   - deployment: Deploy
     displayName: Deploy job
     pool:
-      vmImage: $(vmImageName)
-    environment: 'aksworkshop'
+      vmImage: ubuntu-latest
+    environment: 'aksworkshop' # name of the environment to target
     strategy:
       runOnce:
         deploy:
@@ -90,9 +61,19 @@ stages:
             displayName: Create imagePullSecret
             inputs:
               action: createSecret
-              secretName: $(imagePullSecret)
+              secretName: 'myacr-pullsecret'
               namespace: $(k8sNamespace)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+              kubernetesServiceConnection: $(kubernetesServiceConnection)
+
+          - task: KubernetesManifest@0
+            displayName: Create MONGPASSWORD secret
+            inputs:
+              action: createSecret
+              secretName: mongoDB
+              secretType: generic
+              namespace: $(k8sNamespace)
+              secretArguments: --from-literal=mongoHost=$(mongoHost) --from-literal=mongoUser=$(mongoUser) --from-literal=mongoPassword=$(mongoPassword)
               kubernetesServiceConnection: $(kubernetesServiceConnection)
 
           - task: KubernetesManifest@0
@@ -100,12 +81,19 @@ stages:
             inputs:
               action: deploy
               namespace: $(k8sNamespace)
-              manifests: |
-                $(System.ArtifactsDirectory)/manifests/deployment.yaml
-                $(System.ArtifactsDirectory)/manifests/service.yaml
-                $(System.ArtifactsDirectory)/manifests/hpa.yaml
+              manifests: manifests/*
               imagePullSecrets: |
-                $(imagePullSecret)
+                'myacr-pullsecret'
               containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
-              kubernetesServiceConnection: $(kubernetesServiceConnection)              
+                sabbour.azurecr.io/captureorder:$(tag) # replace with your own repository/imagename
+              kubernetesServiceConnection: $(kubernetesServiceConnection)      
+
+          - task: KubernetesManifest@0
+            displayName: Patching the deployment environment variables
+            inputs:
+              action: patch
+              resourceToPatch: file
+              resourceFiletoPatch: manifests/deployment.yaml
+              namespace: $(k8sNamespace)
+              patch: '{"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}'
+              kubernetesServiceConnection: $(kubernetesServiceConnection)        
