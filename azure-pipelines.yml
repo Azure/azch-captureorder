@@ -92,7 +92,8 @@ stages:
             displayName: Patch the deployment environment variables
             inputs:
               action: patch
-              resourceToPatch: captureorder
+              resourceToPatch: name
+              name: captureorder
               kind: Deployment
               namespace: $(k8sNamespace)
               patch: '{"spec": {"template": {"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}}}' # replace 'captureorder' with your deployment name
