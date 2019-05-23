@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ imageRepository }}
+spec:
+  selector:
+      matchLabels:
+        app: {{ imageRepository }}
+  replicas: {{ replicas }}
+  template:
+      metadata:
+        labels:
+            app: {{ imageRepository }}
+      spec:
+        containers:
+        - name: {{ imageRepository }}
+          image: {{ containerRegistryConnection.Authorization.Parameters.loginServer }}/{{ imageRepository }}:{{ buildId }}
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              port: {{ internalContainerPort }}
+              path: /healthz
+          livenessProbe:
+            httpGet:
+              port: {{ internalContainerPort }}
+              path: /healthz
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          env:
+          - name: TEAMNAME
+            value: {{ teamName }}
+          - name: MONGOHOST
+            value: {{ mongoHost }}
+          - name: MONGOUSER
+            value: {{ mongoUser }}
+          - name: MONGOPASSWORD
+            value: {{ mongoPassword }}
+          ports:
+          - containerPort: {{ servicePort }}

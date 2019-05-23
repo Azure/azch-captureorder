@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ imageRepository }}
+spec:   
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: {{ servicePort }}
+    targetPort: {{ internalContainerPort }} 
+  selector:
+    app: {{ imageRepository }}
