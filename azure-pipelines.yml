@@ -81,7 +81,7 @@ stages:
             inputs:
               action: deploy
               namespace: $(k8sNamespace)
-              manifests: manifests/*
+              manifests: $(System.DefaultWorkingDirectory)/manifests/*
               imagePullSecrets: |
                 'myacr-pullsecret'
               containers: |
@@ -93,7 +93,7 @@ stages:
             inputs:
               action: patch
               resourceToPatch: file
-              resourceFiletoPatch: manifests/deployment.yaml
+              resourceFiletoPatch: $(System.DefaultWorkingDirectory)/manifests/deployment.yaml
               namespace: $(k8sNamespace)
               patch: '{"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}'
               kubernetesServiceConnection: $(kubernetesServiceConnection)        
