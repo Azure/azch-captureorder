@@ -37,17 +37,17 @@ spec:
           - name: MONGOHOST
             valueFrom:
               secretKeyRef:
-                name: mongoDB
+                name: mongodb
                 key: mongoHost
           - name: MONGOUSER
             valueFrom:
               secretKeyRef:
-                name: mongoDB
+                name: mongodb
                 key: mongoUser
           - name: MONGOPASSWORD
             valueFrom:
               secretKeyRef:
-                name: mongoDB
+                name: mongodb
                 key: mongoPassword
           ports:
           - containerPort: 80

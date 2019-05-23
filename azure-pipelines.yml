@@ -67,10 +67,10 @@ stages:
               kubernetesServiceConnection: $(kubernetesServiceConnection)
 
           - task: KubernetesManifest@0
-            displayName: Create MONGPASSWORD secret
+            displayName: Create secret for MongoDB
             inputs:
               action: createSecret
-              secretName: mongoDB
+              secretName: mongodb
               secretType: generic
               namespace: $(k8sNamespace)
               secretArguments: --from-literal=mongoHost=$(mongoHost) --from-literal=mongoUser=$(mongoUser) --from-literal=mongoPassword=$(mongoPassword)
