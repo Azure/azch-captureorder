@@ -6,7 +6,7 @@ variables:
     value: 'containerRegistryConnection' # replace with container registry service connection name established during pipeline creation
   
   - name: imageRepository
-    value: 'captureorder' # replace with your own image name
+    value: 'captureorder' # replace with your own image name to match the name in the deployment.yaml
 
   - name: tag
     value: '$(Build.BuildId)'
@@ -93,7 +93,7 @@ stages:
             inputs:
               action: patch
               resourceToPatch: name
-              name: captureorder
+              name: $(imageRepository) 
               kind: Deployment
               namespace: $(k8sNamespace)
-              patch: '{"spec": {"template": {"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}}}' # replace 'captureorder' with your deployment name
+              patch: '{"spec": {"template": {"spec":{"containers":[{"name":"$(imageRepository)","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}}}' # replacing teamName with the value specified in the variables
