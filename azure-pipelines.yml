@@ -60,13 +60,13 @@ stages:
               artifactName: 'manifests'
               downloadPath: '$(System.ArtifactsDirectory)/manifests'
 
-          # - task: KubernetesManifest@0
-          #   displayName: Create imagePullSecret from dockerRegistryServiceConnection
-          #   inputs:
-          #     action: createSecret
-          #     secretName: acr-auth
-          #     namespace: $(k8sNamespace)
-          #     dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret from dockerRegistryServiceConnection
+            inputs:
+              action: createSecret
+              secretName: acr-auth
+              namespace: $(k8sNamespace)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
 
           - task: KubernetesManifest@0
             displayName: Create secret for MongoDB
@@ -83,8 +83,8 @@ stages:
               action: deploy
               namespace: $(k8sNamespace)
               manifests: $(System.ArtifactsDirectory)/manifests/*
-              # imagePullSecrets: |
-              #   acr-auth
+              imagePullSecrets: |
+                acr-auth
               containers: |
                 $(imageRepository):$(tag)
 
