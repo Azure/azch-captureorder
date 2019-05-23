@@ -64,7 +64,7 @@ stages:
             displayName: Create imagePullSecret
             inputs:
               action: createSecret
-              secretName: 'myacr-pullsecret'
+              secretName: 'acr-auth'
               namespace: $(k8sNamespace)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
 
@@ -84,7 +84,7 @@ stages:
               namespace: $(k8sNamespace)
               manifests: $(System.ArtifactsDirectory)/manifests/*
               imagePullSecrets: |
-                'myacr-pullsecret'
+                'acr-auth'
               containers: |
                 $(imageRepository):$(tag)
 
