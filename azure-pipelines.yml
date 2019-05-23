@@ -40,6 +40,7 @@ stages:
         targetPath: 'manifests'
 
 - stage: Deploy
+  environment: 'aksworkshop.dev' # name of the environment to target
   displayName: Deploy stage
   dependsOn: Build
   jobs:
@@ -50,7 +51,6 @@ stages:
     strategy:
       runOnce:
         deploy:
-          environment: 'aksworkshop.dev' # name of the environment to target
           steps:
           - task: DownloadPipelineArtifact@1
             inputs:
