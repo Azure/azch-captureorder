@@ -9,7 +9,7 @@ variables:
   
   # Kubernetes Namespace
   k8sNamespace: 'dev'
-  imagePullSecret: 'sabbourb787-auth'
+  imagePullSecret: 'myacr-pullsecret'
 
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
@@ -34,7 +34,7 @@ stages:
       inputs:
         command: buildAndPush
         repository: $(imageRepository)
-        dockerfile: $(dockerfileP ath)
+        dockerfile: $(dockerfilePath)
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
