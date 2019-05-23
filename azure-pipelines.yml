@@ -40,6 +40,7 @@ stages:
         targetPath: 'manifests'
 
 - stage: Deploy
+  environment: 'aksworkshop.dev' # name of the environment to target
   displayName: Deploy stage
   dependsOn: Build
   jobs:
@@ -47,7 +48,6 @@ stages:
     displayName: Deploy job
     pool:
       vmImage: ubuntu-latest
-    environment: 'aksworkshop' # name of the environment to target
     strategy:
       runOnce:
         deploy:
@@ -64,7 +64,7 @@ stages:
               secretName: 'myacr-pullsecret'
               namespace: $(k8sNamespace)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-              kubernetesServiceConnection: $(kubernetesServiceConnection)
+              #kubernetesServiceConnection: $(kubernetesServiceConnection)
 
           - task: KubernetesManifest@0
             displayName: Create secret for MongoDB
@@ -74,7 +74,7 @@ stages:
               secretType: generic
               namespace: $(k8sNamespace)
               secretArguments: --from-literal=mongoHost=$(mongoHost) --from-literal=mongoUser=$(mongoUser) --from-literal=mongoPassword=$(mongoPassword)
-              kubernetesServiceConnection: $(kubernetesServiceConnection)
+              #kubernetesServiceConnection: $(kubernetesServiceConnection)
 
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
@@ -86,7 +86,7 @@ stages:
                 'myacr-pullsecret'
               containers: |
                 sabbour.azurecr.io/captureorder:$(tag) # replace with your own repository/imagename
-              kubernetesServiceConnection: $(kubernetesServiceConnection)      
+              #kubernetesServiceConnection: $(kubernetesServiceConnection)      
 
           - task: KubernetesManifest@0
             displayName: Patching the deployment environment variables
@@ -96,4 +96,4 @@ stages:
               resourceFiletoPatch: $(System.DefaultWorkingDirectory)/manifests/deployment.yaml
               namespace: $(k8sNamespace)
               patch: '{"spec":{"containers":[{"name":"captureorder","env":[{"name":"teamName","value":"$(teamName)"}}]}]}}'
-              kubernetesServiceConnection: $(kubernetesServiceConnection)        
+              #kubernetesServiceConnection: $(kubernetesServiceConnection)        
