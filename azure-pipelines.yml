@@ -40,7 +40,6 @@ stages:
         targetPath: 'manifests'
 
 - stage: Deploy
-  environment: 'aksworkshop.dev' # name of the environment to target
   displayName: Deploy stage
   dependsOn: Build
   jobs:
@@ -48,6 +47,7 @@ stages:
     displayName: Deploy job
     pool:
       vmImage: ubuntu-latest
+    environment: 'aksworkshop.dev' # name of the environment to target
     strategy:
       runOnce:
         deploy:
