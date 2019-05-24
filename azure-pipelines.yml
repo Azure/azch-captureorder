@@ -1,0 +1,99 @@
+variables:
+  
+  - group: captureorder-variables # Variable Group containing  'teamName', 'mongoHost', 'mongoUser' and the secret 'mongoPassword'
+
+  - name: dockerRegistryServiceConnection
+    value: 'containerRegistryConnection' # replace with container registry service connection name established during pipeline creation
+  
+  - name: imageRepository
+    value: 'captureorder' # replace with your own image name to match the name in the deployment.yaml
+
+  - name: tag
+    value: '$(Build.BuildId)'
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:  
+  - job: Build
+    displayName: Build job
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: '**/Dockerfile'
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: 'manifests'
+        targetPath: 'manifests'
+
+- stage: DeployDev
+  displayName: Deploy to dev stage
+  dependsOn: Build
+
+  variables:
+  - name: k8sNamespace # Kubernetes Namespace to deploy to. This variable is scoped to the DeployDev stage.
+    value: 'dev'
+      
+  jobs:
+  - deployment: DeployDev
+    displayName: Deploy to dev job
+    pool:
+      vmImage: ubuntu-latest
+
+    environment: 'aksworkshop.dev' # name of the environment to target [env name.namespace]. This will pull in the Kubernetes service connection automatically
+
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadPipelineArtifact@1
+            inputs:
+              artifactName: 'manifests'
+              downloadPath: '$(System.ArtifactsDirectory)/manifests'
+
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret from dockerRegistryServiceConnection
+            inputs:
+              action: createSecret
+              secretName: acr-auth # we're going to inject this as an imagePullSecret in the deployment below
+              namespace: $(k8sNamespace)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+
+          - task: KubernetesManifest@0
+            displayName: Create secret for MongoDB
+            inputs:
+              action: createSecret
+              secretName: mongodb
+              secretType: generic
+              namespace: $(k8sNamespace)
+              secretArguments: --from-literal=mongoHost=$(mongoHost) --from-literal=mongoUser=$(mongoUser) --from-literal=mongoPassword=$(mongoPassword)
+
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster
+            inputs:
+              action: deploy
+              namespace: $(k8sNamespace)
+              manifests: $(System.ArtifactsDirectory)/manifests/*
+              imagePullSecrets: | # this automatically injects the imagePullSecret into your Kubernetes deployment configuration
+                acr-auth
+              containers: |
+                $(imageRepository):$(tag)
+
+          - task: KubernetesManifest@0
+            displayName: Patch the deployment environment variables
+            inputs:
+              action: patch
+              resourceToPatch: name
+              name: $(imageRepository) 
+              kind: Deployment
+              namespace: $(k8sNamespace)
+              patch: '{"spec": {"template": {"spec":{"containers":[{"name":"$(imageRepository)","env":[{"name":"TEAMNAME","value":"$(teamName)"}]}]}}}}' # replacing TEAMNAME with the value specified in the variables
