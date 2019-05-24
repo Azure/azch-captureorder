@@ -40,7 +40,7 @@ stages:
   dependsOn: Build
 
   variables:
-  - name: k8sNamespace # Kubernetes Namespace to deploy to
+  - name: k8sNamespace # Kubernetes Namespace to deploy to. This variable is scoped to the DeployDev stage.
     value: 'dev'
       
   jobs:
@@ -49,7 +49,7 @@ stages:
     pool:
       vmImage: ubuntu-latest
 
-    environment: 'aksworkshop.dev' # name of the environment to target. This will pull in the Kubernetes service connection automatically
+    environment: 'aksworkshop.dev' # name of the environment to target [env name.namespace]. This will pull in the Kubernetes service connection automatically
 
     strategy:
       runOnce:
@@ -64,7 +64,7 @@ stages:
             displayName: Create imagePullSecret from dockerRegistryServiceConnection
             inputs:
               action: createSecret
-              secretName: acr-auth
+              secretName: acr-auth # we're going to inject this as an imagePullSecret in the deployment below
               namespace: $(k8sNamespace)
               dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
 
@@ -83,7 +83,7 @@ stages:
               action: deploy
               namespace: $(k8sNamespace)
               manifests: $(System.ArtifactsDirectory)/manifests/*
-              imagePullSecrets: |
+              imagePullSecrets: | # this automatically injects the imagePullSecret into your Kubernetes deployment configuration
                 acr-auth
               containers: |
                 $(imageRepository):$(tag)
