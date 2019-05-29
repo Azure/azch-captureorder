@@ -14,7 +14,7 @@ spec:
       spec:
         containers:
         - name: captureorder
-          image: sabbour.azurecr.io/captureorder # replace with your own repository
+          image: uniqueacrname.azurecr.io/captureorder # replace with your own repository
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
