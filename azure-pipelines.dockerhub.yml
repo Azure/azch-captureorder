@@ -14,8 +14,11 @@ steps:
 - script: docker build -f Dockerfile -t $(imageName) .
   displayName: 'docker build'
   
+  # Only do a docker login and docker push if we're on the master branch
+  # There is no need to login and push for a pull request, since we don't have end to end testing now
 - script: docker login -u $(dockerId) -p $(dockerPassword)
   displayName: 'docker login'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 - script: docker push $(imageName)
   displayName: 'docker push latest if this is the master branch'
@@ -25,3 +28,4 @@ steps:
         docker tag $(imageName) $(imageName):$(build.buildNumber)
         docker push $(imageName):$(build.buildNumber)
   displayName: 'docker push with build number'
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
