@@ -14,7 +14,7 @@ spec:
       spec:
         containers:
         - name: captureorder
-          image: uniqueacrname.azurecr.io/captureorder # replace with your own repository
+          image: akschallengewestus2brandonacr.azurecr.io/captureorder # replace with your own repository
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
@@ -33,7 +33,7 @@ spec:
               cpu: "500m"
           env:
           - name: TEAMNAME
-            value: 'placeholder' # will be patched at deployment time by value of 'teamName' in the variable group
+            value: teamName # will be patched at deployment time by value of 'teamName' in the variable group
           - name: MONGOHOST
             valueFrom:
               secretKeyRef:
