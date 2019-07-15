@@ -83,8 +83,6 @@ stages:
               action: deploy
               namespace: $(k8sNamespace)
               manifests: $(System.ArtifactsDirectory)/manifests/*
-              imagePullSecrets: | # this automatically injects the imagePullSecret into your Kubernetes deployment configuration
-                acr-auth
               containers: |
                 $(imageRepository):$(tag)
 
