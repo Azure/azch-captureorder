@@ -13,12 +13,12 @@ import (
 
 
 var customInsightsKey = os.Getenv("APPINSIGHTS_KEY")
-var challengeInsightsKey = os.Getenv("CHALLENGEAPPINSIGHTS_KEY")
+//var challengeInsightsKey = os.Getenv("CHALLENGEAPPINSIGHTS_KEY")
 var teamName = os.Getenv("TEAMNAME")
 
 // Application Insights telemetry clients
-var challengeTelemetryClient appinsights.TelemetryClient
-var customTelemetryClient appinsights.TelemetryClient
+//var challengeTelemetryClient appinsights.TelemetryClient
+//var customTelemetryClient appinsights.TelemetryClient
 
 // Operations about object
 type OrderController struct {
@@ -27,21 +27,21 @@ type OrderController struct {
 
 func init() {
 	// Init App Insights
-	challengeTelemetryClient = appinsights.NewTelemetryClient(challengeInsightsKey)
-	challengeTelemetryClient.Context().Tags.Cloud().SetRole("captureorder")
+	//challengeTelemetryClient = appinsights.NewTelemetryClient(challengeInsightsKey)
+	//challengeTelemetryClient.Context().Tags.Cloud().SetRole("captureorder")
 
-	if customInsightsKey != "" {
-		customTelemetryClient = appinsights.NewTelemetryClient(customInsightsKey)
+	//if customInsightsKey != "" {
+	//	customTelemetryClient = appinsights.NewTelemetryClient(customInsightsKey)
 
 		// Set role instance name globally -- this is usually the
 		// name of the service submitting the telemetry
-		customTelemetryClient.Context().Tags.Cloud().SetRole("captureorder")
-	}
+	//	customTelemetryClient.Context().Tags.Cloud().SetRole("captureorder")
+	//}
 
-	appinsights.NewDiagnosticsMessageListener(func(msg string) error {
-		fmt.Printf("[%s] %s\n", time.Now().Format(time.UnixDate), msg)
-		return nil
-	})
+	//appinsights.NewDiagnosticsMessageListener(func(msg string) error {
+	//	fmt.Printf("[%s] %s\n", time.Now().Format(time.UnixDate), msg)
+	//	return nil
+	//})
 }
 
 // @Title Capture Order
@@ -56,8 +56,8 @@ func (this *OrderController) Post() {
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
 
 	// Inject telemetry clients
-	models.CustomTelemetryClient = customTelemetryClient;
-	models.ChallengeTelemetryClient = challengeTelemetryClient;
+	//models.CustomTelemetryClient = customTelemetryClient;
+	//models.ChallengeTelemetryClient = challengeTelemetryClient;
 	
 	// Track the request
 	requestStartTime := time.Now()
@@ -101,8 +101,8 @@ func (this *OrderController) Get() {
 	json.Unmarshal(this.Ctx.Input.RequestBody, &ob)
 
 	// Inject telemetry clients
-	models.CustomTelemetryClient = customTelemetryClient;
-	models.ChallengeTelemetryClient = challengeTelemetryClient;
+	//models.CustomTelemetryClient = customTelemetryClient;
+	//models.ChallengeTelemetryClient = challengeTelemetryClient;
 	
 	// Track the request
 	requestStartTime := time.Now()
@@ -137,8 +137,8 @@ func trackRequest(requestStartTime time.Time, requestEndTime time.Time, requestS
 	requestTelemetry.Properties["service"] = "CaptureOrder"
 	requestTelemetry.Name = "CaptureOrder"
 
-	challengeTelemetryClient.Track(requestTelemetry)
-	if customTelemetryClient != nil {
-		customTelemetryClient.Track(requestTelemetry)
-	}
+	//challengeTelemetryClient.Track(requestTelemetry)
+	//if customTelemetryClient != nil {
+	//	customTelemetryClient.Track(requestTelemetry)
+	//}
 }

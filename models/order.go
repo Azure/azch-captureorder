@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Microsoft/ApplicationInsights-Go/appinsights"
+	//"github.com/Microsoft/ApplicationInsights-Go/appinsights"
     "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	amqp10 "pack.ag/amqp"
@@ -57,8 +57,8 @@ var amqpSender *amqp10.Sender
 var serivceBusName string
 
 // Application Insights telemetry clients
-var ChallengeTelemetryClient appinsights.TelemetryClient
-var CustomTelemetryClient appinsights.TelemetryClient
+//var ChallengeTelemetryClient appinsights.TelemetryClient
+//var CustomTelemetryClient appinsights.TelemetryClient
 
 // For tracking and code branching purposes
 var isCosmosDb = strings.Contains(mongoHost, "documents.azure.com")
@@ -78,8 +78,8 @@ func ReadMongoPasswordFromSecret(file string) (string, error) {
 
 // AddOrderToMongoDB Adds the order to MongoDB/CosmosDB
 func AddOrderToMongoDB(order Order) (string, error) {
-	success := false
-	startTime := time.Now()
+	//success := false
+	//startTime := time.Now()
 
 	// Use the existing mongoDBSessionCopy
 	mongoDBSessionCopy := mongoDBSession.Copy()
@@ -97,17 +97,18 @@ func AddOrderToMongoDB(order Order) (string, error) {
 
 	if mongoDBSessionError != nil {
 		// If the team provided an Application Insights key, let's track that exception
-		if CustomTelemetryClient != nil {
-			CustomTelemetryClient.TrackException(mongoDBSessionError)
-		}
+		//if CustomTelemetryClient != nil {
+		//	CustomTelemetryClient.TrackException(mongoDBSessionError)
+		//}
 		printErr("Problem inserting data: ", mongoDBSessionError)
 	} else {
 		log.Println("Inserted order:", StringOrderID)
-		success = true
+		//success = true
 	}
 
-	endTime := time.Now()
+	//endTime := time.Now()
 
+	/*
 	if success {
 		// Track the event for the challenge purposes
 		eventTelemetry := appinsights.NewEventTelemetry("CaptureOrder to " + db)
@@ -118,8 +119,10 @@ func AddOrderToMongoDB(order Order) (string, error) {
 		eventTelemetry.Properties["orderId"] = StringOrderID
 		ChallengeTelemetryClient.Track(eventTelemetry)
 	}
+	*/
 	
 	// Track the dependency, if the team provided an Application Insights key, let's track that dependency
+	/*
 	if CustomTelemetryClient != nil {
 		if isCosmosDb {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
@@ -151,7 +154,7 @@ func AddOrderToMongoDB(order Order) (string, error) {
 			CustomTelemetryClient.Track(dependency)		
 		}
 	}
-
+	*/
 	if(mongoDBSessionError != nil) {
 		printErr("MongoDB session error while inserting order: ", mongoDBSessionError.Error())
 	}
@@ -160,8 +163,8 @@ func AddOrderToMongoDB(order Order) (string, error) {
 
 // GetNumberOfOrdersInDB
 func GetNumberOfOrdersInDB() (int, error) {
-	success := false
-	startTime := time.Now()
+	//success := false
+	//startTime := time.Now()
 
 	// Use the existing mongoDBSessionCopy
 	mongoDBSessionCopy := mongoDBSession.Copy()
@@ -175,17 +178,18 @@ func GetNumberOfOrdersInDB() (int, error) {
 
 	if mongoDBSessionError != nil {
 		// If the team provided an Application Insights key, let's track that exception
-		if CustomTelemetryClient != nil {
-			CustomTelemetryClient.TrackException(mongoDBSessionError)
-		}
+		//if CustomTelemetryClient != nil {
+		//	CustomTelemetryClient.TrackException(mongoDBSessionError)
+		//}
 		printErr("Problem quering number of orders: ", mongoDBSessionError)
 	} else {
 		log.Println("Order count:", orderCount)
-		success = true
+		//success = true
 	}
 
-	endTime := time.Now()
+	//endTime := time.Now()
 
+	/*
 	if success {
 		// Track the event for the challenge purposes
 		eventTelemetry := appinsights.NewEventTelemetry("Order Count on " + db)
@@ -229,6 +233,7 @@ func GetNumberOfOrdersInDB() (int, error) {
 			CustomTelemetryClient.Track(dependency)		
 		}
 	}
+	*/
 
 	if(mongoDBSessionError != nil) {
 		printErr("MongoDB session error while retreiving count: ", mongoDBSessionError.Error())
@@ -350,7 +355,7 @@ func initMongoDial() (success bool, mErr error) {
 	// Create a mongoDBSession which maintains a pool of socket connections
 	// to our MongoDB.
 	success = false
-	startTime := time.Now()
+	//startTime := time.Now()
 
 	log.Println("Attempting to connect to MongoDB")
 	mongoDBSession, mongoDBSessionError = mgo.DialWithInfo(dialInfo)
@@ -370,9 +375,10 @@ func initMongoDial() (success bool, mErr error) {
 
 
 
-	endTime := time.Now()
+	//endTime := time.Now()
 
 	// Track the dependency, if the team provided an Application Insights key, let's track that dependency
+	/*
 	if CustomTelemetryClient != nil {
 		if isCosmosDb {
 			dependency := appinsights.NewRemoteDependencyTelemetry(
@@ -406,6 +412,7 @@ func initMongoDial() (success bool, mErr error) {
 			CustomTelemetryClient.Track(dependency)
 		}
 	}
+	*/
 	return
 }
 
@@ -457,9 +464,9 @@ func initAMQP() {
 	url, err := url.Parse(amqpURL)
 	if err != nil {
 		// If the team provided an Application Insights key, let's track that exception
-		if CustomTelemetryClient != nil {
-			CustomTelemetryClient.TrackException(err)
-		}
+		//if CustomTelemetryClient != nil {
+		//	CustomTelemetryClient.TrackException(err)
+		//}
 		log.Fatal(fmt.Sprintf("Problem parsing AMQP Host %s. Make sure you URL Encoded your policy/password.",url), err)
 	}
 
@@ -504,9 +511,9 @@ func initAMQP10() {
 		)
 		if err != nil {
 			// If the team provided an Application Insights key, let's track that exception
-			if CustomTelemetryClient != nil {
-				CustomTelemetryClient.TrackException(err)
-			}
+			//if CustomTelemetryClient != nil {
+			//	CustomTelemetryClient.TrackException(err)
+			//}
 			log.Fatal("\t\tError creating sender link: ", err)
 		}
 
@@ -533,8 +540,8 @@ func addOrderToAMQP10(orderId string) bool {
 	} else {
 		// Only run this part if AMQP is configured
 		success = false
-		var err error
-		startTime := time.Now()
+		//var err error
+		//startTime := time.Now()
 		body := fmt.Sprintf("{\"order\": \"%s\", \"source\": \"%s\"}", orderId, teamName)
 
 		// Get an empty context
@@ -546,7 +553,7 @@ func addOrderToAMQP10(orderId string) bool {
 		amqp10Context, cancel := context.WithTimeout(amqp10Context, 5*time.Second)
 
 		// Send with retry logic (in case we get a amqp.DetachError)
-		err = try.Do(func(attempt int) (bool, error) {
+		try.Do(func(attempt int) (bool, error) {
 			var err error
 
 			log.Println("Attempting to send the AMQP message: ", body)
@@ -574,8 +581,9 @@ func addOrderToAMQP10(orderId string) bool {
 		cancel()
 		//sender.Close()
 		
-		endTime := time.Now()
+		//endTime := time.Now()
 
+		/*
 		if success {
 			// Track the event for the challenge purposes
 			eventTelemetry := appinsights.NewEventTelemetry("SendOrder to ServiceBus")
@@ -603,6 +611,7 @@ func addOrderToAMQP10(orderId string) bool {
 			dependency.MarkTime(startTime, endTime)
 			CustomTelemetryClient.Track(dependency)
 		}
+		*/
 		log.Printf("Sent to AMQP 1.0 (ServiceBus) - %t, %s: %s", success, amqpURL, body)
 	}
 	return success
@@ -611,12 +620,14 @@ func addOrderToAMQP10(orderId string) bool {
 func trackException(err error) {
 	if err != nil {
 		printErr(err)
+		/*
 		if ChallengeTelemetryClient != nil {
 			ChallengeTelemetryClient.TrackException(err)
 		}
 		if CustomTelemetryClient != nil {
 			CustomTelemetryClient.TrackException(err)
 		}
+		*/
 	}
 }
 

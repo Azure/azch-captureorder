@@ -27,11 +27,8 @@ COPY --from=builder /go/src/captureorderfd .
 
 # Define environment variables
 
-# PLEASE DO NOT OVERRIDE UNLESS INSTRUCTED BY PROCTORS
-ENV CHALLENGEAPPINSIGHTS_KEY=0e90ab6f-79ee-466b-a1e7-fe469a0767da
-
 # Challenge Logging
-ENV TEAMNAME=
+ENV TEAMNAME=team-azch
 
 # Mongo/Cosmos
 ENV MONGOHOST=
