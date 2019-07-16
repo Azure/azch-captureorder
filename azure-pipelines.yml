@@ -85,13 +85,3 @@ stages:
               manifests: $(System.ArtifactsDirectory)/manifests/*
               containers: |
                 $(imageRepository):$(tag)
-
-          - task: KubernetesManifest@0
-            displayName: Patch the deployment environment variables
-            inputs:
-              action: patch
-              resourceToPatch: name
-              name: captureorder 
-              kind: Deployment
-              namespace: $(k8sNamespace)
-              patch: '{"spec": {"template": {"spec":{"containers":[{"name":"captureorder","env":[{"name":"TEAMNAME","value":"$(teamName)"}]}]}}}}' # replacing TEAMNAME with the value specified in the variables
