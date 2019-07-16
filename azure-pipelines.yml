@@ -6,7 +6,7 @@ variables:
     value: 'containerRegistryConnection' # replace with container registry service connection name established during pipeline creation
   
   - name: imageRepository
-    value: 'captureorder' # replace with your own image name to match the name in the deployment.yaml
+    value: 'uniqueacrname.azurecr.io/captureorder' # replace with your own image name to match the name in the deployment.yaml, for example uniqueacrname.azurecr.io/captureorder
 
   - name: tag
     value: '$(Build.BuildId)'
@@ -83,8 +83,6 @@ stages:
               action: deploy
               namespace: $(k8sNamespace)
               manifests: $(System.ArtifactsDirectory)/manifests/*
-              imagePullSecrets: | # this automatically injects the imagePullSecret into your Kubernetes deployment configuration
-                acr-auth
               containers: |
                 $(imageRepository):$(tag)
 
@@ -93,7 +91,7 @@ stages:
             inputs:
               action: patch
               resourceToPatch: name
-              name: $(imageRepository) 
+              name: captureorder 
               kind: Deployment
               namespace: $(k8sNamespace)
-              patch: '{"spec": {"template": {"spec":{"containers":[{"name":"$(imageRepository)","env":[{"name":"TEAMNAME","value":"$(teamName)"}]}]}}}}' # replacing TEAMNAME with the value specified in the variables
+              patch: '{"spec": {"template": {"spec":{"containers":[{"name":"captureorder","env":[{"name":"TEAMNAME","value":"$(teamName)"}]}]}}}}' # replacing TEAMNAME with the value specified in the variables
