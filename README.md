@@ -28,13 +28,6 @@ Content-Type: application/json
 
 The following environment variables need to be passed to the container:
 
-### Logging
-
-```
-ENV TEAMNAME=[YourTeamName]
-ENV CHALLENGEAPPINSIGHTS_KEY=[Challenge Application Insights Key] # Override, if given one by the proctors
-```
-
 ### For MongoDB
 
 ```
