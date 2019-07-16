@@ -1,12 +1,12 @@
 variables:
   
-  - group: captureorder-variables # Variable Group containing  'teamName', 'mongoHost', 'mongoUser' and the secret 'mongoPassword'
+  - group: captureorder-variables # Variable Group containing 'mongoHost', 'mongoUser' and the secret 'mongoPassword'
 
   - name: dockerRegistryServiceConnection
-    value: 'containerRegistryConnection' # replace with container registry service connection name established during pipeline creation
+    value: 'containerRegistryConnection' # make sure it matches the name you used in the service connection
   
-  - name: imageRepository
-    value: 'uniqueacrname.azurecr.io/captureorder' # replace with your own image name to match the name in the deployment.yaml, for example uniqueacrname.azurecr.io/captureorder
+  - name: acrEndpoint
+    value: 'uniqueacrname.azurecr.io' # replace with container registry endpoint
 
   - name: tag
     value: '$(Build.BuildId)'
@@ -24,11 +24,10 @@ stages:
       displayName: Build and push an image to container registry
       inputs:
         command: buildAndPush
-        repository: $(imageRepository)
+        repository: captureorder
         dockerfile: '**/Dockerfile'
         containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
+        tags: $(tag)
 
     - task: PublishPipelineArtifact@0
       inputs:
@@ -61,14 +60,6 @@ stages:
               downloadPath: '$(System.ArtifactsDirectory)/manifests'
 
           - task: KubernetesManifest@0
-            displayName: Create imagePullSecret from dockerRegistryServiceConnection
-            inputs:
-              action: createSecret
-              secretName: acr-auth # we're going to inject this as an imagePullSecret in the deployment below
-              namespace: $(k8sNamespace)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-
-          - task: KubernetesManifest@0
             displayName: Create secret for MongoDB
             inputs:
               action: createSecret
@@ -83,5 +74,4 @@ stages:
               action: deploy
               namespace: $(k8sNamespace)
               manifests: $(System.ArtifactsDirectory)/manifests/*
-              containers: |
-                $(imageRepository):$(tag)
+              containers: '$(acrEndpoint)/captureorder:$(tag)'
