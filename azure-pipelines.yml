@@ -6,7 +6,7 @@ variables:
     value: 'containerRegistryConnection'
   
   - name: acrEndpoint
-    value: akschallengecontainterregistry.azurecr.io # replace with container registry endpoint
+    value: akschallengecontainterregistry.azurecr.io #
 
   - name: tag
     value: '$(Build.BuildId)'
@@ -48,7 +48,7 @@ stages:
     pool:
       vmImage: ubuntu-latest
 
-    environment: 'aksworkshop.dev' # name of the environment to target [env name.namespace]. This will pull in the Kubernetes service connection automatically
+    environment: 'aksworkshop.dev'
 
     strategy:
       runOnce:
