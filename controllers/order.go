@@ -94,7 +94,7 @@ func (this *OrderController) Post() {
 // @Description Capture order GET
 // @Success 200 {string} count of orders in the database
 // @Failure 403 body is empty
-// @router / [post]
+// @router / [get]
 func (this *OrderController) Get() {
 
 	var ob models.Order
