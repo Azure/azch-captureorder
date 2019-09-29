@@ -22,7 +22,13 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o captureorderfd .
 ## App stage
 FROM alpine:latest  
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# Tell docker that all future commands should run as the appuser user
+USER appuser
+
+WORKDIR /appuser/
+
 COPY --from=builder /go/src/captureorderfd .
 
 # Define environment variables
