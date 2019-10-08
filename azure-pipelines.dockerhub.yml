@@ -8,7 +8,9 @@ pool:
   vmImage: 'Ubuntu 16.04'
 
 variables:
-  imageName: '$(dockerId)/captureorder'
+  - group: azch-docker
+  - name: imageName
+    value: '$(dockerId)/captureorder'
 
 steps:
 - script: docker build -f Dockerfile -t $(imageName) .
