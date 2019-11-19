@@ -24,7 +24,7 @@ stages:
       displayName: Build and push an image to container registry
       inputs:
         command: buildAndPush
-        repository: captureorder
+        repository: $(imageRepository)
         dockerfile: '**/Dockerfile'
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: $(tag)
