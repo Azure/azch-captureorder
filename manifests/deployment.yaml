@@ -14,7 +14,7 @@ spec:
       spec:
         containers:
         - name: captureorder
-          image: ready0220.azurecr.io/captureorder:placeholdertag # replace with your own repository. Due to a bug, leave the :placeholdertag tag in there to allow the pipeline to replace it
+          image: sladeracr.azurecr.io/captureorder:cd1 # replace with your own repository. Due to a bug, leave the :placeholdertag tag in there to allow the pipeline to replace it
           imagePullPolicy: Always
           readinessProbe:
             httpGet:
