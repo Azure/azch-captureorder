@@ -2,7 +2,7 @@
 FROM golang:1.9.4 as builder
 
 # Set the working directory to the app directory
-WORKDIR /go/src/captureorderfd
+WORKDIR /go/src/azch-captureorder
 
 # Install godeps
 RUN go get -u -v github.com/astaxie/beego
@@ -17,13 +17,13 @@ RUN go get gopkg.in/matryer/try.v1
 COPY . .
 
 # Build stage
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o captureorderfd .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o azch-captureorder .
 
 ## App stage
 FROM alpine:latest  
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
-COPY --from=builder /go/src/captureorderfd .
+COPY --from=builder /go/src/azch-captureorder .
 
 # Define environment variables
 
@@ -40,4 +40,4 @@ EXPOSE 8080
 
 # Set the entry point of the container to the bee command that runs the
 # application and watches for changes
-CMD ["./captureorderfd", "run"]
+CMD ["./azch-captureorder", "run"]

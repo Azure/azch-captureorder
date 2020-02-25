@@ -8,7 +8,7 @@
 package routers
 
 import (
-	"captureorderfd/controllers"
+	"azch-captureorder/controllers"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"

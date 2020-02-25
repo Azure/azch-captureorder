@@ -79,3 +79,9 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+
+# Temp files
+*.tmp
+
+# Debug binary
+__debug_bin

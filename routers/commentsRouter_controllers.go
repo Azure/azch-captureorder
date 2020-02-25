@@ -7,19 +7,22 @@ import (
 
 func init() {
 
-	beego.GlobalControllerRouter["captureorderfd/controllers:OrderController"] = append(beego.GlobalControllerRouter["captureorderfd/controllers:OrderController"],
-		beego.ControllerComments{
-			Method:           "Post",
-			Router:           `/`,
-			AllowHTTPMethods: []string{"post"},
-			MethodParams:     param.Make(),
-			Params:           nil})
+    beego.GlobalControllerRouter["azch-captureorder/controllers:OrderController"] = append(beego.GlobalControllerRouter["azch-captureorder/controllers:OrderController"],
+        beego.ControllerComments{
+            Method: "Post",
+            Router: `/`,
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
 
-			beego.GlobalControllerRouter["captureorderfd/controllers:OrderController"] = append(beego.GlobalControllerRouter["captureorderfd/controllers:OrderController"],
-			beego.ControllerComments{
-				Method:           "Get",
-				Router:           `/`,
-				AllowHTTPMethods: []string{"get"},
-				MethodParams:     param.Make(),
-				Params:           nil})
+    beego.GlobalControllerRouter["azch-captureorder/controllers:OrderController"] = append(beego.GlobalControllerRouter["azch-captureorder/controllers:OrderController"],
+        beego.ControllerComments{
+            Method: "Get",
+            Router: `/`,
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
 }

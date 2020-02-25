@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"captureorderfd/models"
+	"azch-captureorder/models"
 	"encoding/json"
 	"os"
 	"time"
