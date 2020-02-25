@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "captureorderfd/routers"
+	_ "azch-captureorder/routers"
 
 	"github.com/astaxie/beego"
 )
